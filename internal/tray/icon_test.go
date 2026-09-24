@@ -10,7 +10,7 @@ import (
 )
 
 func TestBarsFollowPicks(t *testing.T) {
-	reports := []usage.Report{report("claude", "a", 10, 70), report("codex", "b", 0, 100)}
+	reports := []usage.Report{report("claude", "a", 10, 71), report("codex", "b", 0, 100)}
 	got := Bars(reports, Picks(reports, now))
 	if len(got) != 2 || got[0] != (Bar{Used: 70, OK: true}) || got[1].OK {
 		t.Errorf("got %+v", got)

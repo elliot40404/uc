@@ -58,3 +58,13 @@ func TestTooltipFitsWindowsLimit(t *testing.T) {
 		t.Errorf("len %d, %q", n, got)
 	}
 }
+
+func TestTipAndMenuTextAreShort(t *testing.T) {
+	long := strings.Repeat("x&", 100)
+	if got := Tip("bad\nconfig"); got != "uc\nbad config" {
+		t.Errorf("got %q", got)
+	}
+	if got := MenuText(long); len([]rune(got)) > maxMenu*2 || !strings.HasSuffix(got, "…") {
+		t.Errorf("got %q", got)
+	}
+}

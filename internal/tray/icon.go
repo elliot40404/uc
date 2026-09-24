@@ -6,6 +6,7 @@ import (
 	"image"
 	"image/color"
 	"image/png"
+	"math"
 
 	"github.com/elliot40404/uc/internal/usage"
 )
@@ -24,13 +25,16 @@ var (
 	failed = color.NRGBA{0xf8, 0x51, 0x49, 0x70}
 )
 
-const samples = 4
+const (
+	samples = 4
+	step    = 5
+)
 
 func Bars(reports []usage.Report, picks map[string]usage.Pick) []Bar {
 	var out []Bar
 	for _, p := range Providers(reports) {
 		if pick, ok := picks[p]; ok {
-			out = append(out, Bar{Used: 100 - pick.Report.Left(), OK: true})
+			out = append(out, Bar{Used: math.Round((100-pick.Report.Left())/step) * step, OK: true})
 		} else {
 			out = append(out, Bar{})
 		}

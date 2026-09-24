@@ -10,7 +10,10 @@ import (
 	"github.com/elliot40404/uc/internal/usage"
 )
 
-const maxTip = 127
+const (
+	maxTip  = 127
+	maxMenu = 80
+)
 
 func Providers(reports []usage.Report) []string {
 	var out []string
@@ -50,6 +53,14 @@ func Tooltip(reports []usage.Report, picks map[string]usage.Pick) string {
 		lines = append(lines, usage.TerminalText(line))
 	}
 	return clip(strings.Join(lines, "\n"), maxTip)
+}
+
+func Tip(msg string) string {
+	return clip("uc\n"+usage.TerminalText(msg), maxTip)
+}
+
+func MenuText(s string) string {
+	return menuText(clip(s, maxMenu))
 }
 
 func IsPick(r usage.Report, picks map[string]usage.Pick) bool {
