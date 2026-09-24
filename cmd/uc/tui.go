@@ -19,9 +19,9 @@ const (
 )
 
 func (e env) tui(opts options) error {
-	model := tui.New(e.reports, opts.tui())
+	model := tui.New(e.Reports, opts.tui())
 	if opts.mini {
-		model = tui.NewMini(e.reports, opts.tui())
+		model = tui.NewMini(e.Reports, opts.tui())
 	}
 	return runProgram(model, opts)
 }
@@ -35,7 +35,7 @@ func runProgram(model tui.Model, opts options) error {
 }
 
 func (e env) mini(opts options) error {
-	reports, now, err := e.reports(context.Background())
+	reports, now, err := e.Reports(context.Background())
 	if err := showCacheWarning(err, now); err != nil {
 		return err
 	}
