@@ -5,6 +5,8 @@ package main
 import (
 	"context"
 	"errors"
+	"net/http"
+	"runtime/debug"
 	"time"
 
 	"fyne.io/systray"
@@ -45,6 +47,7 @@ func (t *trayApp) start() {
 func (t *trayApp) loop() {
 	for {
 		timer := time.NewTimer(t.update())
+		release()
 		select {
 		case <-timer.C:
 		case <-t.refresh:
@@ -76,6 +79,13 @@ func (t *trayApp) update() time.Duration {
 	}
 	t.show(reports, now)
 	return every
+}
+
+func release() {
+	if tr, ok := http.DefaultTransport.(*http.Transport); ok {
+		tr.CloseIdleConnections()
+	}
+	debug.FreeOSMemory()
 }
 
 func (t *trayApp) show(reports []usage.Report, now time.Time) {

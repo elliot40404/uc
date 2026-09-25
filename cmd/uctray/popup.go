@@ -35,7 +35,6 @@ type popup struct {
 
 func (p *popup) run(ready chan<- struct{}) {
 	runtime.LockOSThread()
-	p.fonts = flyout.LoadFonts()
 	p.hwnd = p.create()
 	close(ready)
 	var m msg
@@ -133,6 +132,9 @@ func (p *popup) show() {
 	call("GetDpiForMonitor", mon, mdtEffective, ptr(&dpiX), ptr(&dpiY))
 	p.scale = max(float64(dpiX), 96) / 96
 	p.hover = ""
+	if p.fonts == nil {
+		p.fonts = flyout.LoadFonts()
+	}
 	p.render()
 	info := monitorInfo{}
 	info.Size = uint32(unsafe.Sizeof(info))
@@ -150,7 +152,7 @@ func (p *popup) hide() {
 	}
 	call("ShowWindow", uintptr(p.hwnd), swHide)
 	p.shown, p.hiddenAt = false, time.Now()
-	p.img, p.bgra, p.hits = nil, nil, nil
+	p.img, p.bgra, p.hits, p.fonts = nil, nil, nil, nil
 	go debug.FreeOSMemory()
 }
 
