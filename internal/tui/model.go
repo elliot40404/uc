@@ -9,6 +9,7 @@ import (
 	"charm.land/bubbles/v2/spinner"
 	tea "charm.land/bubbletea/v2"
 
+	"github.com/elliot40404/uc/internal/config"
 	"github.com/elliot40404/uc/internal/usage"
 )
 
@@ -20,6 +21,8 @@ type Options struct {
 	Emails    bool
 	Live      bool
 	AltScreen bool
+	Config    config.Config
+	Save      func(config.Config) error
 }
 
 type reportsMsg struct {
@@ -50,12 +53,17 @@ type Model struct {
 	live      bool
 	altScreen bool
 	quitting  bool
+	settings  bool
+	setRow    int
+	cfg       config.Config
+	save      func(config.Config) error
+	saveErr   error
 	width     int
 	height    int
 }
 
 func New(fetch Fetch, o Options) Model {
-	m := Model{fetch: fetch, every: o.Every, compact: o.Compact, emails: o.Emails, live: o.Live, altScreen: o.AltScreen, keys: newKeys(), help: help.New(), now: time.Now(), loading: true, width: 80, height: 24}
+	m := Model{fetch: fetch, every: o.Every, compact: o.Compact, emails: o.Emails, live: o.Live, altScreen: o.AltScreen, cfg: o.Config, save: o.Save, keys: newKeys(), help: help.New(), now: time.Now(), loading: true, width: 80, height: 24}
 	m.spin = spinner.New(spinner.WithSpinner(spinner.MiniDot))
 	return m.withTheme(true)
 }
@@ -107,6 +115,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) onKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
+	if m.settings {
+		return m.onSettingsKey(msg)
+	}
 	switch {
 	case key.Matches(msg, m.keys.quit):
 		m.quitting = true
@@ -119,6 +130,8 @@ func (m Model) onKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		m.compact = !m.compact
 	case key.Matches(msg, m.keys.emails):
 		m.emails = !m.emails
+	case key.Matches(msg, m.keys.settings):
+		m.settings = true
 	case key.Matches(msg, m.keys.help):
 		m.help.ShowAll = !m.help.ShowAll
 	case key.Matches(msg, m.keys.refresh):
