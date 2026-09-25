@@ -55,7 +55,7 @@ The dashboard supports `↑`/`↓` or `j`/`k` to select, `r` to refresh, `c` to 
 
 ## Tray icon (Windows, experimental)
 
-`uctray` puts a small icon in the Windows notification area. It shows one bar per provider: top is Claude, bottom is Codex. Each bar shows the most-used window of that provider's suggested account, green under 60%, yellow under 90%, red above. A pale red bar means no account of that provider is usable.
+`uctray` puts a ring in the Windows notification area. The ring fills with the most-used window of the suggested account across all providers: green under 60%, yellow under 90%, red above. A gray ring with a red dot means no account is usable.
 
 ```sh
 go install -ldflags="-H=windowsgui" github.com/elliot40404/uc/cmd/uctray@latest
@@ -63,7 +63,7 @@ go install -ldflags="-H=windowsgui" github.com/elliot40404/uc/cmd/uctray@latest
 
 Or run `just install-tray`. Without `-H=windowsgui` a console window stays open next to the icon.
 
-Hover shows the suggested account per provider. Click the icon for a menu with every account, `Open dashboard` (starts `uc` in a new terminal, found next to `uctray.exe` or on `PATH`), `Refresh now`, `Start with Windows` and `Quit`. The tray reads the same config and cache as `uc`, refreshes on `defaults.every` (minimum 1 minute), rereads config on every refresh and never shows emails. Only one copy runs at a time.
+Hover shows the suggested account per provider. Left click opens a popup with a card per account, its usage bars and reset times, plus `Open dashboard` (starts `uc` in a new terminal, found next to `uctray.exe` or on `PATH`) and `Refresh`. The popup follows the Windows light or dark taskbar theme and closes on Esc or a click elsewhere. Right click has `Refresh now`, `Start with Windows` and `Quit`. The tray reads the same config and cache as `uc`, refreshes on `defaults.every` (minimum 1 minute), rereads config on every refresh and never shows emails. Only one copy runs at a time.
 
 ## Which account to use first?
 
