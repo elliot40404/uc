@@ -25,7 +25,7 @@ const (
 	OpenHit  = "open"
 	RefrHit  = "refresh"
 	barLeft  = 54
-	barRight = 244
+	barRight = 218
 )
 
 type Hit struct {
@@ -61,16 +61,24 @@ func Render(v View, t Theme, f *Fonts, scale float64, hover string) (*image.RGBA
 	draw.Draw(img, img.Bounds(), image.NewUniform(t.Bg), image.Point{}, draw.Src)
 	c := &canvas{img: img, scale: scale, fonts: f}
 	c.text("Usage limits", 16, 30, 14, true, t.Text)
-	c.right(v.Status, Width-16, 30, 12, false, t.Dim)
+	c.right(c.fit(v.Status, 200, 12, false), Width-16, 30, 12, false, t.Dim)
 	y := float64(headerH)
 	if len(v.Sections) == 0 {
-		c.center("No accounts found", box{0, y, Width, emptyH}, 13, false, t.Dim)
+		c.empty(v, t, y)
 		y += emptyH
 	}
 	for _, s := range v.Sections {
 		y = c.section(s, t, y)
 	}
 	return img, c.footer(t, y, hover)
+}
+
+func (c *canvas) empty(v View, t Theme, y float64) {
+	msg, col := "No accounts found", t.Dim
+	if v.Error != "" {
+		msg, col = v.Error, t.Yellow
+	}
+	c.center(c.fit(msg, Width-2*pad-2*inner, 13, false), box{0, y, Width, emptyH}, 13, false, col)
 }
 
 func (c *canvas) section(s Section, t Theme, y float64) float64 {
@@ -122,7 +130,7 @@ func (c *canvas) bar(b Bar, t Theme, y float64) {
 	if b.Used > 0 {
 		c.round(box{barLeft, y + 8, max(width*min(b.Used, 100)/100, 6), 6}, 3, t.level(b.Used))
 	}
-	c.right(fmt.Sprintf("%.0f%%", b.Used), barRight+40, y+15, 12, true, t.Text)
+	c.right(fmt.Sprintf("%.0f%%", b.Used), barRight+44, y+15, 12, true, t.Text)
 	c.right(b.Resets, Width-pad-inner, y+15, 12, false, t.Faint)
 }
 

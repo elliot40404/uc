@@ -10,6 +10,7 @@ import (
 
 type View struct {
 	Status   string
+	Error    string
 	Sections []Section
 }
 
