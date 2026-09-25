@@ -26,7 +26,7 @@ go install github.com/elliot40404/uc/cmd/uc@latest
 
 Or clone the repository and run `just install` to install from the local source. Make sure your Go bin directory is on `PATH`. Run `just` to list build, test, lint, and other local tasks.
 
-On macOS, Claude Code may store its login in Keychain. `uc` currently reads Claude credentials from files only, so those accounts can appear as `not logged in`. Codex reads its local `auth.json`.
+On macOS, Claude Code may store its login in Keychain instead of `.credentials.json`. `uc` reads the file first and falls back to Keychain through `/usr/bin/security`. macOS may ask once to allow this. Codex reads its local `auth.json`.
 
 ## Commands and views
 
