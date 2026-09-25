@@ -11,6 +11,7 @@ import (
 
 	"github.com/elliot40404/uc/internal/app"
 	"github.com/elliot40404/uc/internal/config"
+	"github.com/elliot40404/uc/internal/flyout"
 	"github.com/elliot40404/uc/internal/tray"
 	"github.com/elliot40404/uc/internal/usage"
 )
@@ -19,26 +20,31 @@ const minEvery = time.Minute
 
 type trayApp struct {
 	refresh chan struct{}
-	menu    *menu
+	popup   *popup
+	last    flyout.View
 }
 
 func newTray() *trayApp {
 	t := &trayApp{refresh: make(chan struct{}, 1)}
-	t.menu = &menu{open: t.open, refresh: t.requestRefresh}
+	t.popup = &popup{onOpen: t.open, onRefresh: t.requestRefresh}
 	return t
 }
 
 func (t *trayApp) start() {
-	systray.SetIcon(tray.Icon(nil))
+	ready := make(chan struct{})
+	go t.popup.run(ready)
+	<-ready
+	systray.SetIcon(tray.Loading())
 	systray.SetTooltip("uc\nloading")
-	t.menu.set("Loading", nil)
+	systray.SetOnTapped(t.popup.toggle)
+	buildMenu(t.requestRefresh)
+	t.popup.setView(flyout.View{Status: "Loading"})
 	go t.loop()
 }
 
 func (t *trayApp) loop() {
 	for {
-		every := t.update()
-		timer := time.NewTimer(every)
+		timer := time.NewTimer(t.update())
 		select {
 		case <-timer.C:
 		case <-t.refresh:
@@ -60,33 +66,35 @@ func (t *trayApp) update() time.Duration {
 		t.fail("Config error: " + err.Error())
 		return config.DefaultRefresh
 	}
-	t.menu.setStatus("Refreshing")
+	every := max(env.Cfg.Defaults.Refresh, minEvery)
+	t.last.Status = "Refreshing…"
+	t.popup.setView(t.last)
 	reports, now, err := env.Reports(context.Background())
 	if err != nil && !errors.Is(err, app.ErrCacheSave) {
 		t.fail("Error: " + err.Error())
-		return max(env.Cfg.Defaults.Refresh, minEvery)
+		return every
 	}
 	t.show(reports, now)
-	return max(env.Cfg.Defaults.Refresh, minEvery)
+	return every
 }
 
 func (t *trayApp) show(reports []usage.Report, now time.Time) {
-	picks := tray.Picks(reports, now)
-	lines := make([]string, len(reports))
-	for i, r := range reports {
-		lines[i] = tray.Line(r, tray.IsPick(r, picks))
-	}
-	systray.SetIcon(tray.Icon(tray.Bars(reports, picks)))
-	systray.SetTooltip(tray.Tooltip(reports, picks))
-	status := "Updated " + now.Format("15:04")
-	if len(reports) == 0 {
-		status = "No accounts found"
-	}
-	t.menu.set(status, lines)
+	systray.SetIcon(tray.Icon(tray.GaugeOf(reports, now)))
+	systray.SetTooltip(tray.Tooltip(reports, tray.Picks(reports, now)))
+	t.last = flyout.Build(reports, now)
+	t.last.Status = "Updated " + now.Format("15:04")
+	t.popup.setView(t.last)
 }
 
 func (t *trayApp) fail(msg string) {
-	systray.SetIcon(tray.Icon([]tray.Bar{{}}))
+	systray.SetIcon(tray.Icon(tray.Gauge{}))
 	systray.SetTooltip(tray.Tip(msg))
-	t.menu.set(tray.MenuText(msg), nil)
+	t.last = flyout.View{Status: "Failed " + time.Now().Format("15:04"), Error: usage.TerminalText(msg)}
+	t.popup.setView(t.last)
+}
+
+func (t *trayApp) open() {
+	if err := openDashboard(); err != nil {
+		t.popup.setStatus("Could not open uc")
+	}
 }

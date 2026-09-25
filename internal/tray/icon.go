@@ -7,71 +7,64 @@ import (
 	"image/color"
 	"image/png"
 	"math"
+	"time"
 
 	"github.com/elliot40404/uc/internal/usage"
 )
 
-type Bar struct {
+type Gauge struct {
 	Used float64
 	OK   bool
 }
 
 var (
-	sizes  = []int{16, 24, 32, 48, 64}
+	sizes  = []int{16, 20, 24, 32, 40, 48, 64}
 	green  = color.NRGBA{0x3f, 0xb9, 0x50, 0xff}
-	yellow = color.NRGBA{0xd2, 0x99, 0x22, 0xff}
+	yellow = color.NRGBA{0xe3, 0xa0, 0x08, 0xff}
 	red    = color.NRGBA{0xf8, 0x51, 0x49, 0xff}
-	track  = color.NRGBA{0x80, 0x80, 0x80, 0x90}
-	failed = color.NRGBA{0xf8, 0x51, 0x49, 0x70}
+	track  = color.NRGBA{0x9a, 0x9a, 0x9a, 0x70}
 )
 
 const (
-	samples = 4
-	step    = 5
+	samples   = 4
+	step      = 5
+	thickness = 0.2
 )
 
-func Bars(reports []usage.Report, picks map[string]usage.Pick) []Bar {
-	var out []Bar
-	for _, p := range Providers(reports) {
-		if pick, ok := picks[p]; ok {
-			out = append(out, Bar{Used: math.Round((100-pick.Report.Left())/step) * step, OK: true})
-		} else {
-			out = append(out, Bar{})
-		}
+func GaugeOf(reports []usage.Report, now time.Time) Gauge {
+	pick, ok := usage.Best(reports, "", now)
+	if !ok {
+		return Gauge{}
 	}
-	return out
+	return Gauge{Used: math.Round((100-pick.Report.Left())/step) * step, OK: true}
 }
 
-func Icon(bars []Bar) []byte {
-	if len(bars) == 0 {
-		bars = []Bar{{OK: true}}
-	}
+func Icon(g Gauge) []byte {
 	images := make([][]byte, len(sizes))
 	for i, s := range sizes {
 		var buf bytes.Buffer
-		_ = png.Encode(&buf, draw(bars, s))
+		_ = png.Encode(&buf, drawIcon(g, s))
 		images[i] = buf.Bytes()
 	}
 	return ico(images)
 }
 
-func draw(bars []Bar, size int) *image.NRGBA {
+func Loading() []byte {
+	return Icon(Gauge{OK: true})
+}
+
+func drawIcon(g Gauge, size int) *image.NRGBA {
 	img := image.NewNRGBA(image.Rect(0, 0, size, size))
-	n := float64(len(bars))
-	s := float64(size)
-	margin, gap := s/16, s/8
-	h := (s - 2*margin - (n-1)*gap) / n
-	for i, b := range bars {
-		y := margin + float64(i)*(h+gap)
-		r := rect{margin, y, s - margin, y + h}
-		bg := track
-		if !b.OK {
-			bg = failed
-		}
-		fill(img, r, r.x1, bg)
-		if b.OK && b.Used > 0 {
-			fill(img, r, r.x0+max(r.w()*min(b.Used, 100)/100, margin), level(b.Used))
-		}
+	r := ring{c: float64(size) / 2, width: float64(size) * thickness}
+	r.outer = r.c - float64(size)/32
+	r.inner = r.outer - r.width
+	sweep := min(max(g.Used, 0), 100) / 100 * 2 * math.Pi
+	paint(img, func(x, y float64) bool { return r.onRing(x, y) }, track)
+	if !g.OK {
+		paint(img, func(x, y float64) bool { return math.Hypot(x-r.c, y-r.c) <= r.width }, red)
+	}
+	if g.OK && g.Used > 0 {
+		paint(img, func(x, y float64) bool { return r.onArc(x, y, sweep) }, level(g.Used))
 	}
 	return img
 }
@@ -87,31 +80,39 @@ func level(pct float64) color.NRGBA {
 	}
 }
 
-type rect struct{ x0, y0, x1, y1 float64 }
+type ring struct{ c, outer, inner, width float64 }
 
-func (r rect) w() float64 { return r.x1 - r.x0 }
-func (r rect) h() float64 { return r.y1 - r.y0 }
-
-func (r rect) has(x, y float64) bool {
-	if x < r.x0 || x >= r.x1 || y < r.y0 || y >= r.y1 {
-		return false
-	}
-	rad := min(r.h(), r.w()) / 2
-	cx := min(max(x, r.x0+rad), r.x1-rad)
-	cy := min(max(y, r.y0+rad), r.y1-rad)
-	return (x-cx)*(x-cx)+(y-cy)*(y-cy) <= rad*rad
+func (r ring) onRing(x, y float64) bool {
+	d := math.Hypot(x-r.c, y-r.c)
+	return d >= r.inner && d <= r.outer
 }
 
-func fill(img *image.NRGBA, shape rect, until float64, c color.NRGBA) {
+func (r ring) onArc(x, y, sweep float64) bool {
+	if sweep >= 2*math.Pi {
+		return r.onRing(x, y)
+	}
+	a := math.Atan2(x-r.c, r.c-y)
+	if a < 0 {
+		a += 2 * math.Pi
+	}
+	return r.onRing(x, y) && a <= sweep || r.onCap(x, y, 0) || r.onCap(x, y, sweep)
+}
+
+func (r ring) onCap(x, y, angle float64) bool {
+	mid := (r.outer + r.inner) / 2
+	cx := r.c + mid*math.Sin(angle)
+	cy := r.c - mid*math.Cos(angle)
+	return math.Hypot(x-cx, y-cy) <= r.width/2
+}
+
+func paint(img *image.NRGBA, inside func(x, y float64) bool, c color.NRGBA) {
 	b := img.Bounds()
 	for py := b.Min.Y; py < b.Max.Y; py++ {
 		for px := b.Min.X; px < b.Max.X; px++ {
 			hits := 0
 			for sy := range samples {
 				for sx := range samples {
-					x := float64(px) + (float64(sx)+0.5)/samples
-					y := float64(py) + (float64(sy)+0.5)/samples
-					if x < until && shape.has(x, y) {
+					if inside(float64(px)+(float64(sx)+0.5)/samples, float64(py)+(float64(sy)+0.5)/samples) {
 						hits++
 					}
 				}

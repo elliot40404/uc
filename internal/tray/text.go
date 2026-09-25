@@ -10,10 +10,7 @@ import (
 	"github.com/elliot40404/uc/internal/usage"
 )
 
-const (
-	maxTip  = 127
-	maxMenu = 80
-)
+const maxTip = 127
 
 func Providers(reports []usage.Report) []string {
 	var out []string
@@ -35,14 +32,6 @@ func Picks(reports []usage.Report, now time.Time) map[string]usage.Pick {
 	return out
 }
 
-func Line(r usage.Report, picked bool) string {
-	name := r.Provider + " " + r.Account
-	if picked {
-		name = "★ " + name
-	}
-	return menuText(name) + "\t" + menuText(state(r))
-}
-
 func Tooltip(reports []usage.Report, picks map[string]usage.Pick) string {
 	lines := []string{"uc"}
 	for _, p := range Providers(reports) {
@@ -59,24 +48,9 @@ func Tip(msg string) string {
 	return clip("uc\n"+usage.TerminalText(msg), maxTip)
 }
 
-func MenuText(s string) string {
-	return menuText(clip(s, maxMenu))
-}
-
 func IsPick(r usage.Report, picks map[string]usage.Pick) bool {
 	p, ok := picks[r.Provider]
 	return ok && p.Report.Dir == r.Dir
-}
-
-func state(r usage.Report) string {
-	if r.Status != usage.StatusOK {
-		return string(r.Status)
-	}
-	s := windows(r)
-	if r.Stale {
-		s += " (cached)"
-	}
-	return s
 }
 
 func windows(r usage.Report) string {
@@ -85,10 +59,6 @@ func windows(r usage.Report) string {
 		parts[i] = fmt.Sprintf("%s %.0f%%", w.Name, w.UsedPct)
 	}
 	return strings.Join(parts, "  ")
-}
-
-func menuText(s string) string {
-	return strings.ReplaceAll(usage.TerminalText(s), "&", "&&")
 }
 
 func clip(s string, n int) string {

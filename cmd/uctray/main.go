@@ -17,6 +17,7 @@ func main() {
 		return
 	}
 	defer windows.CloseHandle(lock)
+	call("SetProcessDpiAwarenessContext", dpiAwareV2)
 	t := newTray()
 	systray.Run(t.start, nil)
 }

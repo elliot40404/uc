@@ -24,21 +24,6 @@ func report(provider, account string, session, week float64) usage.Report {
 	}
 }
 
-func TestLine(t *testing.T) {
-	r := report("claude", "R&D", 5, 33)
-	if got := Line(r, true); got != "★ claude R&&D\t5h 5%  7d 33%" {
-		t.Errorf("got %q", got)
-	}
-	r.Stale = true
-	if got := Line(r, false); got != "claude R&&D\t5h 5%  7d 33% (cached)" {
-		t.Errorf("got %q", got)
-	}
-	r.Status = usage.StatusExpired
-	if got := Line(r, false); got != "claude R&&D\texpired" {
-		t.Errorf("got %q", got)
-	}
-}
-
 func TestTooltipShowsBestPerProvider(t *testing.T) {
 	reports := []usage.Report{report("claude", "a", 10, 90), report("claude", "b", 20, 10), report("codex", "c", 0, 100)}
 	got := Tooltip(reports, Picks(reports, now))
@@ -59,12 +44,8 @@ func TestTooltipFitsWindowsLimit(t *testing.T) {
 	}
 }
 
-func TestTipAndMenuTextAreShort(t *testing.T) {
-	long := strings.Repeat("x&", 100)
+func TestTipIsOneLine(t *testing.T) {
 	if got := Tip("bad\nconfig"); got != "uc\nbad config" {
-		t.Errorf("got %q", got)
-	}
-	if got := MenuText(long); len([]rune(got)) > maxMenu*2 || !strings.HasSuffix(got, "…") {
 		t.Errorf("got %q", got)
 	}
 }

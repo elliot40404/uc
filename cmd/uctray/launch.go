@@ -9,15 +9,7 @@ import (
 	"syscall"
 
 	"golang.org/x/sys/windows"
-
-	"github.com/elliot40404/uc/internal/tray"
 )
-
-func (t *trayApp) open() {
-	if err := openDashboard(); err != nil {
-		t.menu.setStatus(tray.MenuText("Could not open uc: " + err.Error()))
-	}
-}
 
 func openDashboard() error {
 	path, err := ucPath()
