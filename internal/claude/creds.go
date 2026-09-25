@@ -1,7 +1,8 @@
 package claude
 
 import (
-	"os"
+	"encoding/json"
+	"errors"
 	"path/filepath"
 	"time"
 
@@ -25,7 +26,11 @@ type credsFile struct {
 
 func LoadCreds(dir string) (Creds, error) {
 	var f credsFile
-	if err := jsonfile.Read(filepath.Join(dir, ".credentials.json"), &f); err != nil {
+	err := jsonfile.Read(filepath.Join(dir, ".credentials.json"), &f)
+	if errors.Is(err, usage.ErrNoLogin) {
+		err = keychainCreds(dir, &f)
+	}
+	if err != nil {
 		return Creds{}, err
 	}
 	if f.OAuth == nil || f.OAuth.AccessToken == "" {
@@ -36,6 +41,14 @@ func LoadCreds(dir string) (Creds, error) {
 		ExpiresAt:   time.UnixMilli(f.OAuth.ExpiresAt),
 		Plan:        f.OAuth.SubscriptionType,
 	}, nil
+}
+
+func keychainCreds(dir string, f *credsFile) error {
+	data, err := readKeychain(keychainService(dir))
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(data, f)
 }
 
 func (c Creds) Expired(now time.Time) bool {
@@ -57,9 +70,8 @@ func Email(dir string) string {
 }
 
 func accountPath(dir string) string {
-	home, err := os.UserHomeDir()
-	if err == nil && filepath.Clean(dir) == filepath.Join(home, ".claude") {
-		return filepath.Join(home, ".claude.json")
+	if isDefaultDir(dir) {
+		return filepath.Join(filepath.Dir(filepath.Clean(dir)), ".claude.json")
 	}
 	return filepath.Join(dir, ".claude.json")
 }

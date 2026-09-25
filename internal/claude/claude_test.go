@@ -97,9 +97,49 @@ func TestReport429IsLimited(t *testing.T) {
 }
 
 func TestReportNoLogin(t *testing.T) {
+	stubKeychain(t, "", usage.ErrNoLogin)
 	c := Client{HTTP: &http.Client{}, BaseURL: "http://127.0.0.1:1"}
 	r := c.Report(context.Background(), "w", t.TempDir(), now)
 	if r.Status != usage.StatusNoLogin {
 		t.Fatalf("want no login, got %+v", r)
+	}
+}
+
+func stubKeychain(t *testing.T, body string, err error) *string {
+	var asked string
+	old := readKeychain
+	readKeychain = func(service string) ([]byte, error) {
+		asked = service
+		return []byte(body), err
+	}
+	t.Cleanup(func() { readKeychain = old })
+	return &asked
+}
+
+func TestLoadCredsFromKeychain(t *testing.T) {
+	body := `{"claudeAiOauth":{"accessToken":"kc","expiresAt":1,"subscriptionType":"max"}}`
+	asked := stubKeychain(t, body, nil)
+	dir := t.TempDir()
+	c, err := LoadCreds(dir)
+	if err != nil || c.AccessToken != "kc" || c.Plan != "max" {
+		t.Fatalf("bad creds: %+v %v", c, err)
+	}
+	if *asked != keychainService(dir) {
+		t.Errorf("asked %q", *asked)
+	}
+}
+
+func TestLoadCredsFilePreferredOverKeychain(t *testing.T) {
+	asked := stubKeychain(t, "", nil)
+	c, err := LoadCreds(writeCreds(t, now.Add(time.Hour)))
+	if err != nil || c.AccessToken != "tok" || *asked != "" {
+		t.Fatalf("bad creds: %+v %v asked %q", c, err, *asked)
+	}
+}
+
+func TestLoadCredsKeychainMissing(t *testing.T) {
+	stubKeychain(t, "", usage.ErrNoLogin)
+	if _, err := LoadCreds(t.TempDir()); err != usage.ErrNoLogin {
+		t.Fatalf("want no login, got %v", err)
 	}
 }
