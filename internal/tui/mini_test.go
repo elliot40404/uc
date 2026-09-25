@@ -8,6 +8,7 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 
+	"github.com/elliot40404/uc/internal/config"
 	"github.com/elliot40404/uc/internal/usage"
 )
 
@@ -30,7 +31,7 @@ func TestPrintMini(t *testing.T) {
 }
 
 func TestLiveMiniScreenAndDropsHelpOnQuit(t *testing.T) {
-	fetch := func(context.Context) ([]usage.Report, time.Time, error) { return sample(), now, nil }
+	fetch := func(context.Context, config.Config) ([]usage.Report, time.Time, error) { return sample(), now, nil }
 	m := NewMini(fetch, Options{Every: 5 * time.Minute, Emails: true, Live: true, AltScreen: true})
 	next, _ := m.Update(tea.WindowSizeMsg{Width: 160, Height: 40})
 	next, _ = next.Update(reportsMsg{sample(), now, nil})

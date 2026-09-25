@@ -10,12 +10,13 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 
+	"github.com/elliot40404/uc/internal/config"
 	"github.com/elliot40404/uc/internal/usage"
 )
 
 func TestProgramRunsAndQuits(t *testing.T) {
 	loaded := make(chan struct{})
-	fetch := func(context.Context) ([]usage.Report, time.Time, error) {
+	fetch := func(context.Context, config.Config) ([]usage.Report, time.Time, error) {
 		defer close(loaded)
 		return sample(), now, nil
 	}

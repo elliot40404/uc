@@ -74,6 +74,11 @@ func (e env) reports(parent context.Context) ([]usage.Report, time.Time, error) 
 	return reports, now, nil
 }
 
+func (e env) reportsWith(ctx context.Context, c config.Config) ([]usage.Report, time.Time, error) {
+	e.cfg = c
+	return e.reports(ctx)
+}
+
 func showCacheWarning(err error, at time.Time) error {
 	if errors.Is(err, errCacheSave) && !at.IsZero() {
 		fmt.Fprintln(os.Stderr, "uc:", errCacheSave)

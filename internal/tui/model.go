@@ -10,10 +10,11 @@ import (
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/elliot40404/uc/internal/config"
+	"github.com/elliot40404/uc/internal/discover"
 	"github.com/elliot40404/uc/internal/usage"
 )
 
-type Fetch func(ctx context.Context) ([]usage.Report, time.Time, error)
+type Fetch func(ctx context.Context, cfg config.Config) ([]usage.Report, time.Time, error)
 
 type Options struct {
 	Every     time.Duration
@@ -23,6 +24,7 @@ type Options struct {
 	AltScreen bool
 	Config    config.Config
 	Save      func(config.Config) error
+	Found     []discover.Account
 }
 
 type reportsMsg struct {
@@ -58,12 +60,13 @@ type Model struct {
 	cfg       config.Config
 	save      func(config.Config) error
 	saveErr   error
+	found     []discover.Account
 	width     int
 	height    int
 }
 
 func New(fetch Fetch, o Options) Model {
-	m := Model{fetch: fetch, every: o.Every, compact: o.Compact, emails: o.Emails, live: o.Live, altScreen: o.AltScreen, cfg: o.Config, save: o.Save, keys: newKeys(), help: help.New(), now: time.Now(), loading: true, width: 80, height: 24}
+	m := Model{fetch: fetch, every: o.Every, compact: o.Compact, emails: o.Emails, live: o.Live, altScreen: o.AltScreen, cfg: o.Config, save: o.Save, found: o.Found, keys: newKeys(), help: help.New(), now: time.Now(), loading: true, width: 80, height: 24}
 	m.spin = spinner.New(spinner.WithSpinner(spinner.MiniDot))
 	return m.withTheme(true)
 }
@@ -80,9 +83,9 @@ func (m Model) Init() tea.Cmd {
 }
 
 func (m Model) load() tea.Cmd {
-	fetch := m.fetch
+	fetch, cfg := m.fetch, m.cfg
 	return func() tea.Msg {
-		reports, at, err := fetch(context.Background())
+		reports, at, err := fetch(context.Background(), cfg)
 		return reportsMsg{reports, at, err}
 	}
 }

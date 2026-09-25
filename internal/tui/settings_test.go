@@ -138,7 +138,7 @@ func TestSettingsViewFull(t *testing.T) {
 }
 
 func TestSettingsViewMiniAndError(t *testing.T) {
-	fetch := func(context.Context) ([]usage.Report, time.Time, error) { return sample(), now, nil }
+	fetch := func(context.Context, config.Config) ([]usage.Report, time.Time, error) { return sample(), now, nil }
 	m := NewMini(fetch, Options{Every: 5 * time.Minute, Live: true})
 	next, _ := m.Update(tea.WindowSizeMsg{Width: 100, Height: 30})
 	m = next.(Model)
@@ -152,5 +152,18 @@ func TestSettingsViewMiniAndError(t *testing.T) {
 	}
 	if m = press(t, m, keyEsc); !strings.Contains(plain(m.frame()), "s settings") {
 		t.Errorf("mini help should stay after live is off:\n%s", plain(m.frame()))
+	}
+}
+
+func TestFetchGetsSavedConfig(t *testing.T) {
+	var got config.Config
+	m := New(func(_ context.Context, c config.Config) ([]usage.Report, time.Time, error) {
+		got = c
+		return nil, now, nil
+	}, Options{Every: 5 * time.Minute, Live: true})
+	m = press(t, m, keyS, keySpace)
+	m.load()()
+	if got.Defaults.Live {
+		t.Fatalf("fetch should see saved config, got %+v", got.Defaults)
 	}
 }
