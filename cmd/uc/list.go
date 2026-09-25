@@ -9,7 +9,7 @@ import (
 )
 
 func (e env) list(opts options) error {
-	reports, now, err := e.reports(context.Background())
+	reports, now, err := e.Reports(context.Background())
 	if err := showCacheWarning(err, now); err != nil {
 		return err
 	}

@@ -1,4 +1,6 @@
 /uc.exe
+/uctray.exe
+*.exe~
 /uc
 /dist/
 *.stackdump

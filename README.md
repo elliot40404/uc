@@ -53,6 +53,18 @@ The dashboard supports `↑`/`↓` or `j`/`k` to select, `r` to refresh, `c` to 
 
 `--json` includes `generated_at` and an `accounts` array. Each account contains its provider, name, local directory, status and available usage windows. `left_pct` is the percentage left in the most-used window; it is `null` when usage is unavailable. Emails are omitted unless `--emails` is set or `show_emails` is enabled in config. JSON and `uc best` can reveal local account paths, so check output before sharing it.
 
+## Tray icon (Windows, experimental)
+
+`uctray` puts a ring in the Windows notification area. The ring fills with the most-used window of the suggested account across all providers: green under 60%, yellow under 90%, red above. A gray ring with a red dot means no account is usable.
+
+```sh
+go install -ldflags="-H=windowsgui" github.com/elliot40404/uc/cmd/uctray@latest
+```
+
+Or run `just install-tray`. Without `-H=windowsgui` a console window stays open next to the icon.
+
+Hover shows the suggested account per provider. Left click opens a popup with a card per account, its usage bars and reset times,, with a refresh icon in the header. The popup follows the Windows light or dark taskbar theme and closes on Esc or a click elsewhere. Right click has `Refresh now`, `Start with Windows` and `Quit`. The tray reads the same config and cache as `uc`, refreshes on `defaults.every` (minimum 1 minute), rereads config on every refresh and never shows emails. Only one copy runs at a time.
+
 ## Which account to use first?
 
 The dashboard suggests one account per provider. `uc best` chooses the highest-ranked account across providers, or only the provider you name. The ranking is **unused 7-day quota divided by days until its reset**; a reset less than 5 hours away is treated as 5 hours away. This favors quota that would otherwise expire soon.

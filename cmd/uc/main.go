@@ -70,7 +70,7 @@ func run(args []string) error {
 	if err != nil {
 		return err
 	}
-	opts, pos, err := parse(args, env.configPath, env.cfg.Defaults)
+	opts, pos, err := parse(args, env.ConfigPath, env.Cfg.Defaults)
 	if err != nil {
 		return err
 	}
@@ -92,7 +92,7 @@ func run(args []string) error {
 	case "init":
 		return env.init()
 	case "help":
-		fmt.Printf(usageText, env.configPath)
+		fmt.Printf(usageText, env.ConfigPath)
 		return nil
 	default:
 		return fmt.Errorf("unknown command %q, see uc help", cmd)

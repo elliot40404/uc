@@ -15,6 +15,16 @@ build:
 install:
     go install -ldflags="{{ldflags}}" ./cmd/uc
 
+[doc("build the Windows tray app here")]
+[windows]
+build-tray:
+    go build -ldflags="{{ldflags}} -H=windowsgui" -o uctray.exe ./cmd/uctray
+
+[doc("install the Windows tray app to Go bin dir on PATH")]
+[windows]
+install-tray:
+    go install -ldflags="{{ldflags}} -H=windowsgui" ./cmd/uctray
+
 [doc("run uc with args, e.g. just run best claude")]
 run *args:
     go run ./cmd/uc {{args}}
@@ -46,7 +56,7 @@ check: lint test
 [windows]
 clean:
     go clean
-    Remove-Item -Force -ErrorAction Ignore {{exe}}
+    Remove-Item -Force -ErrorAction Ignore {{exe}}, uctray.exe
 
 [doc("delete build output")]
 [unix]

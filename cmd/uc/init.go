@@ -7,9 +7,9 @@ import (
 )
 
 func (e env) init() error {
-	if err := config.Write(e.configPath, config.Starter(e.found(), e.home), e.home); err != nil {
+	if err := config.Write(e.ConfigPath, config.Starter(e.Found(), e.Home), e.Home); err != nil {
 		return err
 	}
-	fmt.Println("wrote", e.configPath)
+	fmt.Println("wrote", e.ConfigPath)
 	return nil
 }

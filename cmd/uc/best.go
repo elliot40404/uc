@@ -17,7 +17,7 @@ func (e env) best(opts options, args []string) error {
 	if err != nil {
 		return err
 	}
-	reports, now, err := e.reports(context.Background())
+	reports, now, err := e.Reports(context.Background())
 	if err := showCacheWarning(err, now); err != nil {
 		return err
 	}
