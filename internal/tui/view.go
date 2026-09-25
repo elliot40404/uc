@@ -29,11 +29,18 @@ func (m Model) frame() string {
 	}
 	w := m.width - 2*marginX
 	header := m.header(w)
-	footer := m.help.View(m.keys)
+	footer := m.footer()
 	bodyH := max(m.height-lipgloss.Height(header)-lipgloss.Height(footer)-1, 1)
 	body := lipgloss.NewStyle().Height(bodyH).MaxHeight(bodyH).Render(m.body(w, bodyH))
 	page := lipgloss.JoinVertical(lipgloss.Left, header, body, "", footer)
 	return lipgloss.NewStyle().Padding(0, marginX).MaxWidth(m.width).Render(page)
+}
+
+func (m Model) footer() string {
+	if m.settings {
+		return m.settingsHelp()
+	}
+	return m.help.View(m.keys)
 }
 
 func (m Model) header(w int) string {
@@ -88,6 +95,8 @@ func (m Model) bestLine(w int) string {
 func (m Model) body(w, h int) string {
 	t := m.theme
 	switch {
+	case m.settings:
+		return strings.Join(m.settingsLines(), "\n")
 	case m.err != nil && len(m.reports) == 0:
 		return t.fg(t.bad).Width(w).Render("Could not load accounts: " + usage.TerminalText(m.err.Error()) + "\nPress r to retry.")
 	case m.loading && len(m.reports) == 0:

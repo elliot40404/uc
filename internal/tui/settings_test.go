@@ -1,13 +1,17 @@
 package tui
 
 import (
+	"context"
 	"errors"
+	"strings"
 	"testing"
 	"time"
 
 	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 
 	"github.com/elliot40404/uc/internal/config"
+	"github.com/elliot40404/uc/internal/usage"
 )
 
 func press(t *testing.T, m Model, keys ...tea.KeyPressMsg) Model {
@@ -111,5 +115,42 @@ func TestStepEvery(t *testing.T) {
 		if got := stepEvery(c.cur, c.dir); got != c.want {
 			t.Errorf("stepEvery(%v, %d) = %v, want %v", c.cur, c.dir, got, c.want)
 		}
+	}
+}
+
+func TestSettingsViewFull(t *testing.T) {
+	for _, size := range [][2]int{{60, 20}, {80, 24}} {
+		m := press(t, loaded(t, size[0], size[1]), keyS)
+		frame := m.frame()
+		if lipgloss.Height(frame) > size[1] || lipgloss.Width(frame) > size[0] {
+			t.Errorf("%v: frame %dx%d too big", size, lipgloss.Width(frame), lipgloss.Height(frame))
+		}
+		out := plain(frame)
+		for _, want := range []string{"SETTINGS", "› [x] live refresh", "[ ] compact rows", "mini by default  next launch", "refresh every   ‹ 5m ›", "esc back"} {
+			if !strings.Contains(out, want) {
+				t.Errorf("%v: missing %q:\n%s", size, want, out)
+			}
+		}
+		if strings.Contains(out, "personal") {
+			t.Errorf("settings should replace account cards:\n%s", out)
+		}
+	}
+}
+
+func TestSettingsViewMiniAndError(t *testing.T) {
+	fetch := func(context.Context) ([]usage.Report, time.Time, error) { return sample(), now, nil }
+	m := NewMini(fetch, Options{Every: 5 * time.Minute, Live: true})
+	next, _ := m.Update(tea.WindowSizeMsg{Width: 100, Height: 30})
+	m = next.(Model)
+	m.save = func(config.Config) error { return errors.New("disk full") }
+	m = press(t, m, keyS, keySpace)
+	out := plain(m.frame())
+	for _, want := range []string{"SETTINGS", "[ ] live refresh", "not saved: disk full", "esc back"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("mini settings missing %q:\n%s", want, out)
+		}
+	}
+	if m = press(t, m, keyEsc); !strings.Contains(plain(m.frame()), "s settings") {
+		t.Errorf("mini help should stay after live is off:\n%s", plain(m.frame()))
 	}
 }
