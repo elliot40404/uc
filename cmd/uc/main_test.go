@@ -18,6 +18,9 @@ func TestReportsKeepUsageWhenCacheSaveFails(t *testing.T) {
 	}
 	t.Setenv("LOCALAPPDATA", blocked)
 	t.Setenv("XDG_CACHE_HOME", blocked)
+	t.Setenv("HOME", blocked)
+	t.Setenv("CLAUDE_CONFIG_DIR", "")
+	t.Setenv("CODEX_HOME", "")
 	e := env{home: home}
 	reports, at, err := e.reports(t.Context())
 	if !errors.Is(err, errCacheSave) || at.IsZero() || len(reports) != 0 {
