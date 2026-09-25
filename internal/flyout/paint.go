@@ -67,6 +67,17 @@ func (c *canvas) center(s string, b box, size float64, bold bool, col color.RGBA
 	c.text(s, b.x+(b.w-c.width(s, size, bold))/2, b.y+b.h/2+size*0.36, size, bold, col)
 }
 
+func (c *canvas) glyph(s string, b box, size float64, col color.RGBA) {
+	face := c.fonts.of(c.fonts.icons, c.s(size))
+	w := float64(font.MeasureString(face, s)) / 64
+	m := face.Metrics()
+	h := float64(m.Ascent+m.Descent) / 64
+	x := c.s(b.x) + (c.s(b.w)-w)/2
+	y := c.s(b.y) + (c.s(b.h)-h)/2 + float64(m.Ascent)/64
+	d := font.Drawer{Dst: c.img, Src: image.NewUniform(col), Face: face, Dot: fixed.P(int(math.Round(x)), int(math.Round(y)))}
+	d.DrawString(s)
+}
+
 func (c *canvas) width(s string, size float64, bold bool) float64 {
 	return float64(font.MeasureString(c.fonts.face(bold, c.s(size)), s)) / 64 / c.scale
 }

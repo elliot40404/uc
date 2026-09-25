@@ -63,7 +63,7 @@ go install -ldflags="-H=windowsgui" github.com/elliot40404/uc/cmd/uctray@latest
 
 Or run `just install-tray`. Without `-H=windowsgui` a console window stays open next to the icon.
 
-Hover shows the suggested account per provider. Left click opens a popup with a card per account, its usage bars and reset times, and a `Refresh` button. The popup follows the Windows light or dark taskbar theme and closes on Esc or a click elsewhere. Right click has `Refresh now`, `Start with Windows` and `Quit`. The tray reads the same config and cache as `uc`, refreshes on `defaults.every` (minimum 1 minute), rereads config on every refresh and never shows emails. Only one copy runs at a time.
+Hover shows the suggested account per provider. Left click opens a popup with a card per account, its usage bars and reset times,, with a refresh icon in the header. The popup follows the Windows light or dark taskbar theme and closes on Esc or a click elsewhere. Right click has `Refresh now`, `Start with Windows` and `Quit`. The tray reads the same config and cache as `uc`, refreshes on `defaults.every` (minimum 1 minute), rereads config on every refresh and never shows emails. Only one copy runs at a time.
 
 ## Which account to use first?
 

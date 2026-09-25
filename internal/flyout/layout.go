@@ -9,6 +9,8 @@ import (
 	"strings"
 )
 
+const refreshGlyph rune = 0xE72C
+
 const (
 	Width    = 360
 	pad      = 12
@@ -20,8 +22,8 @@ const (
 	noteH    = 20
 	cardGap  = 6
 	emptyH   = 72
-	footerH  = 60
-	buttonH  = 32
+	bottomH  = 6
+	iconBox  = 28
 	RefrHit  = "refresh"
 	barLeft  = 54
 	barRight = 218
@@ -33,7 +35,7 @@ type Hit struct {
 }
 
 func Height(v View) float64 {
-	h := float64(headerH + footerH)
+	h := float64(headerH + bottomH)
 	if len(v.Sections) == 0 {
 		return h + emptyH
 	}
@@ -60,7 +62,8 @@ func Render(v View, t Theme, f *Fonts, scale float64, hover string) (*image.RGBA
 	draw.Draw(img, img.Bounds(), image.NewUniform(t.Bg), image.Point{}, draw.Src)
 	c := &canvas{img: img, scale: scale, fonts: f}
 	c.text("Usage limits", 16, 30, 14, true, t.Text)
-	c.right(c.fit(v.Status, 200, 12, false), Width-16, 30, 12, false, t.Dim)
+	hits := c.refreshButton(t, hover)
+	c.right(c.fit(v.Status, 200, 12, false), Width-pad-iconBox-6, 30, 12, false, t.Dim)
 	y := float64(headerH)
 	if len(v.Sections) == 0 {
 		c.empty(v, t, y)
@@ -69,7 +72,7 @@ func Render(v View, t Theme, f *Fonts, scale float64, hover string) (*image.RGBA
 	for _, s := range v.Sections {
 		y = c.section(s, t, y)
 	}
-	return img, c.footer(t, y, hover)
+	return img, hits
 }
 
 func (c *canvas) empty(v View, t Theme, y float64) {
@@ -133,17 +136,17 @@ func (c *canvas) bar(b Bar, t Theme, y float64) {
 	c.right(b.Resets, Width-pad-inner, y+15, 12, false, t.Faint)
 }
 
-func (c *canvas) footer(t Theme, y float64, hover string) []Hit {
-	c.round(box{0, y + 4, Width, 1}, 0, t.Line)
-	refresh := box{pad, y + 16, Width - 2*pad, buttonH}
-	fill := t.Button
+func (c *canvas) refreshButton(t Theme, hover string) []Hit {
+	b := box{Width - pad - iconBox, (headerH - iconBox) / 2, iconBox, iconBox}
 	if hover == RefrHit {
-		fill = t.Hover
+		c.round(b, 6, t.Hover)
 	}
-	c.round(refresh, 6, t.Line)
-	c.round(box{refresh.x + 1, refresh.y + 1, refresh.w - 2, refresh.h - 2}, 5, fill)
-	c.center("Refresh", refresh, 13, false, t.Text)
-	return []Hit{{c.pixels(refresh), RefrHit}}
+	if c.fonts.icons != nil {
+		c.glyph(string(refreshGlyph), b, 14, t.Dim)
+	} else {
+		c.center("↻", b, 16, false, t.Dim)
+	}
+	return []Hit{{c.pixels(b), RefrHit}}
 }
 
 func (c *canvas) pixels(b box) image.Rectangle {
