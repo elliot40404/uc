@@ -47,10 +47,14 @@ func TestScanKeepsCaseSensitiveAccounts(t *testing.T) {
 		t.Skip("Windows paths are case-insensitive")
 	}
 	home := t.TempDir()
-	for _, name := range []string{".claude-Work", ".claude-work"} {
-		if err := os.Mkdir(filepath.Join(home, name), 0o700); err != nil {
-			t.Fatal(err)
-		}
+	if err := os.Mkdir(filepath.Join(home, ".claude-Work"), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if isDir(filepath.Join(home, ".claude-work")) {
+		t.Skip("file system is case-insensitive")
+	}
+	if err := os.Mkdir(filepath.Join(home, ".claude-work"), 0o700); err != nil {
+		t.Fatal(err)
 	}
 	if got := Scan("claude", home, ".claude", ""); len(got) != 2 {
 		t.Fatalf("want two accounts, got %+v", got)
