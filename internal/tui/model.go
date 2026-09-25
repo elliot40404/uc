@@ -25,6 +25,7 @@ type Options struct {
 	Config    config.Config
 	Save      func(config.Config) error
 	Found     []discover.Account
+	Home      string
 }
 
 type reportsMsg struct {
@@ -61,12 +62,14 @@ type Model struct {
 	save      func(config.Config) error
 	saveErr   error
 	found     []discover.Account
+	home      string
+	reload    bool
 	width     int
 	height    int
 }
 
 func New(fetch Fetch, o Options) Model {
-	m := Model{fetch: fetch, every: o.Every, compact: o.Compact, emails: o.Emails, live: o.Live, altScreen: o.AltScreen, cfg: o.Config, save: o.Save, found: o.Found, keys: newKeys(), help: help.New(), now: time.Now(), loading: true, width: 80, height: 24}
+	m := Model{fetch: fetch, every: o.Every, compact: o.Compact, emails: o.Emails, live: o.Live, altScreen: o.AltScreen, cfg: o.Config, save: o.Save, found: o.Found, home: o.Home, keys: newKeys(), help: help.New(), now: time.Now(), loading: true, width: 80, height: 24}
 	m.spin = spinner.New(spinner.WithSpinner(spinner.MiniDot))
 	return m.withTheme(true)
 }
@@ -104,7 +107,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyPressMsg:
 		return m.onKey(msg)
 	case reportsMsg:
-		return m.onReports(msg), nil
+		m = m.onReports(msg)
+		if m.reload {
+			m.reload = false
+			return m.startLoad()
+		}
 	case tickMsg:
 		return m.onTick(time.Time(msg))
 	case spinner.TickMsg:

@@ -29,7 +29,8 @@ func (m Model) miniFrame() string {
 	parts := []string{m.headerCore(w), ""}
 	switch {
 	case m.settings:
-		parts = append(parts, m.settingsLines()...)
+		lines, _ := m.settingsLines()
+		parts = append(parts, lines...)
 	case m.err != nil && len(m.reports) == 0:
 		parts = append(parts, m.theme.fg(m.theme.bad).Render("Could not load accounts: "+usage.TerminalText(m.err.Error())))
 	case len(m.reports) == 0 && m.loading:

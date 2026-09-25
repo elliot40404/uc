@@ -9,17 +9,26 @@ import (
 
 var settingLabels = [rowCount]string{"live refresh", "compact rows", "show emails", "mini by default", "alt screen", "refresh every"}
 
-func (m Model) settingsLines() []string {
+func (m Model) settingsLines() ([]string, int) {
 	t := m.theme
-	lines := []string{t.fg(t.accent).Bold(true).Render("SETTINGS"), ""}
+	lines := []string{t.fg(t.accent).Bold(true).Render("SETTINGS"), m.saveStatus(), ""}
 	for r := range rowCount {
 		lines = append(lines, m.settingLine(r))
 	}
-	lines = append(lines, "")
-	if m.saveErr != nil {
-		return append(lines, t.fg(t.bad).Render("not saved: "+usage.TerminalText(m.saveErr.Error())))
+	lines = append(lines, "", t.fg(t.accent).Bold(true).Render("ACCOUNTS"))
+	sel := 3 + m.setRow
+	if m.setRow >= rowCount {
+		sel = len(lines) + m.setRow - rowCount
 	}
-	return append(lines, t.fg(t.subtle).Render("changes save to config.json right away"))
+	return append(lines, m.accountLines()...), sel
+}
+
+func (m Model) saveStatus() string {
+	t := m.theme
+	if m.saveErr != nil {
+		return t.fg(t.bad).Render("not saved: " + usage.TerminalText(m.saveErr.Error()))
+	}
+	return t.fg(t.subtle).Render("changes save to config.json right away")
 }
 
 func (m Model) settingLine(r int) string {
@@ -59,5 +68,8 @@ func (m Model) checkbox(on bool) string {
 }
 
 func (m Model) settingsHelp() string {
+	if m.setRow >= rowCount {
+		return m.help.ShortHelpView([]key.Binding{m.keys.up, m.keys.down, m.keys.hide, m.keys.back})
+	}
 	return m.help.ShortHelpView([]key.Binding{m.keys.up, m.keys.down, m.keys.toggle, m.keys.left, m.keys.back})
 }

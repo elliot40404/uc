@@ -96,7 +96,8 @@ func (m Model) body(w, h int) string {
 	t := m.theme
 	switch {
 	case m.settings:
-		return strings.Join(m.settingsLines(), "\n")
+		lines, sel := m.settingsLines()
+		return fit(lines, sel, h)
 	case m.err != nil && len(m.reports) == 0:
 		return t.fg(t.bad).Width(w).Render("Could not load accounts: " + usage.TerminalText(m.err.Error()) + "\nPress r to retry.")
 	case m.loading && len(m.reports) == 0:

@@ -28,9 +28,11 @@ func (m Model) onSettingsKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	case key.Matches(msg, m.keys.back):
 		m.settings = false
 	case key.Matches(msg, m.keys.up):
-		m.setRow = wrap(m.setRow-1, rowCount)
+		m.setRow = wrap(m.setRow-1, m.settingRows())
 	case key.Matches(msg, m.keys.down):
-		m.setRow = wrap(m.setRow+1, rowCount)
+		m.setRow = wrap(m.setRow+1, m.settingRows())
+	case key.Matches(msg, m.keys.hide):
+		return m.toggleHidden()
 	case key.Matches(msg, m.keys.toggle):
 		m = m.toggle()
 	case key.Matches(msg, m.keys.left):
@@ -42,6 +44,9 @@ func (m Model) onSettingsKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) toggle() Model {
+	if m.setRow >= rowCount {
+		return m
+	}
 	d := &m.cfg.Defaults
 	switch m.setRow {
 	case rowLive:

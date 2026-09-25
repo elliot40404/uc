@@ -16,6 +16,7 @@ type keyMap struct {
 	toggle    key.Binding
 	left      key.Binding
 	right     key.Binding
+	hide      key.Binding
 }
 
 func newKeys() keyMap {
@@ -33,6 +34,7 @@ func newKeys() keyMap {
 		toggle:    key.NewBinding(key.WithKeys("space", "enter"), key.WithHelp("space", "toggle")),
 		left:      key.NewBinding(key.WithKeys("left"), key.WithHelp("←/→", "change")),
 		right:     key.NewBinding(key.WithKeys("right")),
+		hide:      key.NewBinding(key.WithKeys("h"), key.WithHelp("h", "hide/unhide")),
 	}
 }
 
