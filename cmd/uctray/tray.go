@@ -26,7 +26,7 @@ type trayApp struct {
 
 func newTray() *trayApp {
 	t := &trayApp{refresh: make(chan struct{}, 1)}
-	t.popup = &popup{onOpen: t.open, onRefresh: t.requestRefresh}
+	t.popup = &popup{onRefresh: t.requestRefresh}
 	return t
 }
 
@@ -91,10 +91,4 @@ func (t *trayApp) fail(msg string) {
 	systray.SetTooltip(tray.Tip(msg))
 	t.last = flyout.View{Status: "Failed " + time.Now().Format("15:04"), Error: usage.TerminalText(msg)}
 	t.popup.setView(t.last)
-}
-
-func (t *trayApp) open() {
-	if err := openDashboard(); err != nil {
-		t.popup.setStatus("Could not open uc")
-	}
 }

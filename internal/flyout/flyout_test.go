@@ -47,7 +47,7 @@ func TestRenderSizeAndHits(t *testing.T) {
 	if img.Bounds().Dx() != Width*3/2 || float64(img.Bounds().Dy()) < Height(v)*1.5-1 {
 		t.Errorf("size %v", img.Bounds())
 	}
-	if len(hits) != 2 || hits[0].Action != OpenHit || !hits[1].Rect.In(img.Bounds()) {
+	if len(hits) != 1 || hits[0].Action != RefrHit || !hits[0].Rect.In(img.Bounds()) {
 		t.Errorf("hits %+v", hits)
 	}
 }
@@ -61,7 +61,7 @@ func TestPreview(t *testing.T) {
 	for name, theme := range map[string]Theme{"dark": Dark(), "light": Light()} {
 		v := Build(sample(), now)
 		v.Status = "Updated 04:45"
-		img, _ := Render(v, theme, fonts, 1.5, OpenHit)
+		img, _ := Render(v, theme, fonts, 1.5, "")
 		f, err := os.Create(filepath.Join(dir, "flyout_"+name+".png"))
 		if err != nil {
 			t.Fatal(err)

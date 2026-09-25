@@ -70,11 +70,7 @@ func (p *popup) setHover(action string) {
 }
 
 func (p *popup) onClick(x, y int) {
-	switch p.hitAt(x, y) {
-	case flyout.OpenHit:
-		p.hide()
-		go p.onOpen()
-	case flyout.RefrHit:
+	if p.hitAt(x, y) == flyout.RefrHit {
 		go p.onRefresh()
 	}
 }

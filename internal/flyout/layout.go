@@ -22,7 +22,6 @@ const (
 	emptyH   = 72
 	footerH  = 60
 	buttonH  = 32
-	OpenHit  = "open"
 	RefrHit  = "refresh"
 	barLeft  = 54
 	barRight = 218
@@ -136,23 +135,15 @@ func (c *canvas) bar(b Bar, t Theme, y float64) {
 
 func (c *canvas) footer(t Theme, y float64, hover string) []Hit {
 	c.round(box{0, y + 4, Width, 1}, 0, t.Line)
-	w := (Width - 2*pad - 8) / 2.0
-	open := box{pad, y + 16, w, buttonH}
-	refresh := box{pad + w + 8, y + 16, w, buttonH}
-	primary := t.Accent
-	if hover == OpenHit {
-		primary = mix(t.Accent, t.Text, 0.85)
-	}
-	secondary := t.Button
+	refresh := box{pad, y + 16, Width - 2*pad, buttonH}
+	fill := t.Button
 	if hover == RefrHit {
-		secondary = t.Hover
+		fill = t.Hover
 	}
-	c.round(open, 6, primary)
-	c.center("Open dashboard", open, 13, true, t.OnAccent)
 	c.round(refresh, 6, t.Line)
-	c.round(box{refresh.x + 1, refresh.y + 1, refresh.w - 2, refresh.h - 2}, 5, secondary)
+	c.round(box{refresh.x + 1, refresh.y + 1, refresh.w - 2, refresh.h - 2}, 5, fill)
 	c.center("Refresh", refresh, 13, false, t.Text)
-	return []Hit{{c.pixels(open), OpenHit}, {c.pixels(refresh), RefrHit}}
+	return []Hit{{c.pixels(refresh), RefrHit}}
 }
 
 func (c *canvas) pixels(b box) image.Rectangle {

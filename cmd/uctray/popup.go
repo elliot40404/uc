@@ -30,7 +30,6 @@ type popup struct {
 	shown     bool
 	hiddenAt  time.Time
 	tracking  bool
-	onOpen    func()
 	onRefresh func()
 }
 
@@ -72,14 +71,6 @@ func (p *popup) setView(v flyout.View) {
 	if p.hwnd != 0 {
 		call("PostMessageW", uintptr(p.hwnd), wmData, 0, 0)
 	}
-}
-
-func (p *popup) setStatus(status string) {
-	p.mu.Lock()
-	v := p.view
-	p.mu.Unlock()
-	v.Status = status
-	p.setView(v)
 }
 
 func (p *popup) toggle() {
