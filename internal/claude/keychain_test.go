@@ -17,6 +17,9 @@ func TestKeychainServiceDefault(t *testing.T) {
 }
 
 func TestKeychainServiceCustomDir(t *testing.T) {
+	if filepath.Separator != '/' {
+		t.Skip("keychain service names hash POSIX paths")
+	}
 	want := "Claude Code-credentials-1e91dd84"
 	if got := keychainService("/Users/me/.claude-work"); got != want {
 		t.Fatalf("want %q, got %q", want, got)
