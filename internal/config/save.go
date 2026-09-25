@@ -52,13 +52,13 @@ func FormatEvery(d time.Duration) string {
 func shortDirs(entries []Entry, home string) []Entry {
 	out := make([]Entry, len(entries))
 	for i, e := range entries {
-		e.Dir = shortHome(e.Dir, home)
+		e.Dir = ShortHome(e.Dir, home)
 		out[i] = e
 	}
 	return out
 }
 
-func shortHome(dir, home string) string {
+func ShortHome(dir, home string) string {
 	rel, err := filepath.Rel(home, dir)
 	if err != nil || rel == "." || strings.HasPrefix(rel, "..") {
 		return dir
