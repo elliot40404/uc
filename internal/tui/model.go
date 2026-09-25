@@ -7,12 +7,15 @@ import (
 	"charm.land/bubbles/v2/help"
 	"charm.land/bubbles/v2/key"
 	"charm.land/bubbles/v2/spinner"
+	"charm.land/bubbles/v2/textinput"
 	tea "charm.land/bubbletea/v2"
 
+	"github.com/elliot40404/uc/internal/config"
+	"github.com/elliot40404/uc/internal/discover"
 	"github.com/elliot40404/uc/internal/usage"
 )
 
-type Fetch func(ctx context.Context) ([]usage.Report, time.Time, error)
+type Fetch func(ctx context.Context, cfg config.Config) ([]usage.Report, time.Time, error)
 
 type Options struct {
 	Every     time.Duration
@@ -20,6 +23,10 @@ type Options struct {
 	Emails    bool
 	Live      bool
 	AltScreen bool
+	Config    config.Config
+	Save      func(config.Config) error
+	Found     []discover.Account
+	Home      string
 }
 
 type reportsMsg struct {
@@ -50,12 +57,23 @@ type Model struct {
 	live      bool
 	altScreen bool
 	quitting  bool
+	settings  bool
+	setRow    int
+	cfg       config.Config
+	save      func(config.Config) error
+	saveErr   error
+	found     []discover.Account
+	home      string
+	reload    bool
+	renaming  bool
+	renameOf  config.Item
+	input     textinput.Model
 	width     int
 	height    int
 }
 
 func New(fetch Fetch, o Options) Model {
-	m := Model{fetch: fetch, every: o.Every, compact: o.Compact, emails: o.Emails, live: o.Live, altScreen: o.AltScreen, keys: newKeys(), help: help.New(), now: time.Now(), loading: true, width: 80, height: 24}
+	m := Model{fetch: fetch, every: o.Every, compact: o.Compact, emails: o.Emails, live: o.Live, altScreen: o.AltScreen, cfg: o.Config, save: o.Save, found: o.Found, home: o.Home, keys: newKeys(), help: help.New(), now: time.Now(), loading: true, width: 80, height: 24}
 	m.spin = spinner.New(spinner.WithSpinner(spinner.MiniDot))
 	return m.withTheme(true)
 }
@@ -72,9 +90,9 @@ func (m Model) Init() tea.Cmd {
 }
 
 func (m Model) load() tea.Cmd {
-	fetch := m.fetch
+	fetch, cfg := m.fetch, m.cfg
 	return func() tea.Msg {
-		reports, at, err := fetch(context.Background())
+		reports, at, err := fetch(context.Background(), cfg)
 		return reportsMsg{reports, at, err}
 	}
 }
@@ -93,7 +111,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyPressMsg:
 		return m.onKey(msg)
 	case reportsMsg:
-		return m.onReports(msg), nil
+		m = m.onReports(msg)
+		if m.reload {
+			m.reload = false
+			return m.startLoad()
+		}
 	case tickMsg:
 		return m.onTick(time.Time(msg))
 	case spinner.TickMsg:
@@ -103,10 +125,21 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, cmd
 		}
 	}
+	if m.renaming {
+		var cmd tea.Cmd
+		m.input, cmd = m.input.Update(msg)
+		return m, cmd
+	}
 	return m, nil
 }
 
 func (m Model) onKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
+	if m.renaming {
+		return m.onRenameKey(msg)
+	}
+	if m.settings {
+		return m.onSettingsKey(msg)
+	}
 	switch {
 	case key.Matches(msg, m.keys.quit):
 		m.quitting = true
@@ -119,6 +152,8 @@ func (m Model) onKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		m.compact = !m.compact
 	case key.Matches(msg, m.keys.emails):
 		m.emails = !m.emails
+	case key.Matches(msg, m.keys.settings):
+		m.settings = true
 	case key.Matches(msg, m.keys.help):
 		m.help.ShowAll = !m.help.ShowAll
 	case key.Matches(msg, m.keys.refresh):

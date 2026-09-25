@@ -13,6 +13,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 
+	"github.com/elliot40404/uc/internal/config"
 	"github.com/elliot40404/uc/internal/usage"
 )
 
@@ -39,7 +40,7 @@ func sample() []usage.Report {
 }
 
 func loaded(t *testing.T, w, h int) Model {
-	fetch := func(context.Context) ([]usage.Report, time.Time, error) { return sample(), now, nil }
+	fetch := func(context.Context, config.Config) ([]usage.Report, time.Time, error) { return sample(), now, nil }
 	m := New(fetch, Options{Every: 5 * time.Minute, Emails: true, Live: true, AltScreen: true})
 	m.now = now
 	next, _ := m.Update(tea.WindowSizeMsg{Width: w, Height: h})
@@ -73,7 +74,7 @@ func TestFrameFitsScreen(t *testing.T) {
 }
 
 func TestFirstViewShowsLoadingBeforeResize(t *testing.T) {
-	fetch := func(context.Context) ([]usage.Report, time.Time, error) { return nil, now, nil }
+	fetch := func(context.Context, config.Config) ([]usage.Report, time.Time, error) { return nil, now, nil }
 	for _, m := range []Model{New(fetch, Options{Live: true, AltScreen: true}), NewMini(fetch, Options{Live: true, AltScreen: true})} {
 		if out := plain(m.View().Content); !strings.Contains(out, "fetching usage") {
 			t.Errorf("initial view must not be blank: %q", out)
@@ -197,7 +198,7 @@ func TestCacheWarningStillShowsReports(t *testing.T) {
 }
 
 func BenchmarkFirstScreen(b *testing.B) {
-	fetch := func(context.Context) ([]usage.Report, time.Time, error) { return nil, now, nil }
+	fetch := func(context.Context, config.Config) ([]usage.Report, time.Time, error) { return nil, now, nil }
 	b.ReportAllocs()
 	for b.Loop() {
 		m := New(fetch, Options{Every: 5 * time.Minute, Live: true, AltScreen: true})
@@ -207,7 +208,7 @@ func BenchmarkFirstScreen(b *testing.B) {
 }
 
 func BenchmarkLoadedScreen(b *testing.B) {
-	fetch := func(context.Context) ([]usage.Report, time.Time, error) { return sample(), now, nil }
+	fetch := func(context.Context, config.Config) ([]usage.Report, time.Time, error) { return sample(), now, nil }
 	m := New(fetch, Options{Every: 5 * time.Minute, Live: true, AltScreen: true})
 	m.width, m.height = 120, 40
 	m.reports, m.fetchedAt, m.loading = sample(), now, false

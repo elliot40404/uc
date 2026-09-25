@@ -38,6 +38,10 @@ func newEnv() (env, error) {
 	return env{home: home, configPath: path, cfg: cfg}, err
 }
 
+func (e env) saveConfig(c config.Config) error {
+	return config.Save(e.configPath, c, e.home)
+}
+
 func (e env) found() []discover.Account {
 	return append(
 		discover.Scan("claude", e.home, ".claude", os.Getenv("CLAUDE_CONFIG_DIR")),
@@ -68,6 +72,11 @@ func (e env) reports(parent context.Context) ([]usage.Report, time.Time, error) 
 		return reports, now, errCacheSave
 	}
 	return reports, now, nil
+}
+
+func (e env) reportsWith(ctx context.Context, c config.Config) ([]usage.Report, time.Time, error) {
+	e.cfg = c
+	return e.reports(ctx)
 }
 
 func showCacheWarning(err error, at time.Time) error {

@@ -28,6 +28,9 @@ func (m Model) miniFrame() string {
 	w := m.width - 2*marginX
 	parts := []string{m.headerCore(w), ""}
 	switch {
+	case m.settings:
+		lines, _ := m.settingsLines()
+		parts = append(parts, lines...)
 	case m.err != nil && len(m.reports) == 0:
 		parts = append(parts, m.theme.fg(m.theme.bad).Render("Could not load accounts: "+usage.TerminalText(m.err.Error())))
 	case len(m.reports) == 0 && m.loading:
@@ -35,9 +38,16 @@ func (m Model) miniFrame() string {
 	default:
 		parts = append(parts, m.rows(w)...)
 	}
-	if m.live && !m.quitting {
-		parts = append(parts, "", m.help.ShortHelpView([]key.Binding{m.keys.up, m.keys.down, m.keys.refresh, m.keys.emails, m.keys.quit}))
+	if m.fetch != nil && !m.quitting {
+		parts = append(parts, "", m.miniHelp())
 	}
 	page := strings.Join(parts, "\n")
 	return lipgloss.NewStyle().Padding(0, marginX).MaxWidth(m.width).Render(page)
+}
+
+func (m Model) miniHelp() string {
+	if m.settings {
+		return m.settingsHelp()
+	}
+	return m.help.ShortHelpView([]key.Binding{m.keys.up, m.keys.down, m.keys.refresh, m.keys.emails, m.keys.settings, m.keys.quit})
 }

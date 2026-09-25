@@ -19,9 +19,11 @@ const (
 )
 
 func (e env) tui(opts options) error {
-	model := tui.New(e.reports, opts.tui())
+	o := opts.tui()
+	o.Config, o.Save, o.Found, o.Home = e.cfg, e.saveConfig, e.found(), e.home
+	model := tui.New(e.reportsWith, o)
 	if opts.mini {
-		model = tui.NewMini(e.reports, opts.tui())
+		model = tui.NewMini(e.reportsWith, o)
 	}
 	return runProgram(model, opts)
 }
