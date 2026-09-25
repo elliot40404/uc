@@ -38,6 +38,10 @@ func newEnv() (env, error) {
 	return env{home: home, configPath: path, cfg: cfg}, err
 }
 
+func (e env) saveConfig(c config.Config) error {
+	return config.Save(e.configPath, c, e.home)
+}
+
 func (e env) found() []discover.Account {
 	return append(
 		discover.Scan("claude", e.home, ".claude", os.Getenv("CLAUDE_CONFIG_DIR")),
