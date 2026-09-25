@@ -139,7 +139,7 @@ func TestStarterRoundTrip(t *testing.T) {
 	home := t.TempDir()
 	found := []discover.Account{{Provider: "codex", Name: "Copy", Dir: filepath.Join(home, ".codex - Copy")}}
 	path := filepath.Join(t.TempDir(), "uc", "config.json")
-	if err := Write(path, Starter(found, home)); err != nil {
+	if err := Write(path, Starter(found, home), home); err != nil {
 		t.Fatal(err)
 	}
 	data, _ := os.ReadFile(path)
@@ -150,7 +150,7 @@ func TestStarterRoundTrip(t *testing.T) {
 	if err != nil || len(c.Apply(found)) != 1 || c.Accounts[0].Dir != found[0].Dir {
 		t.Errorf("round trip failed: %+v %v", c, err)
 	}
-	if err := Write(path, Starter(found, home)); err == nil {
+	if err := Write(path, Starter(found, home), home); err == nil {
 		t.Error("want error when config exists")
 	}
 }

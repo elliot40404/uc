@@ -11,8 +11,6 @@ import (
 	"slices"
 	"strings"
 	"time"
-
-	"github.com/elliot40404/uc/internal/discover"
 )
 
 var Providers = []string{"claude", "codex"}
@@ -25,11 +23,11 @@ type Entry struct {
 }
 
 type Defaults struct {
-	Mini       bool          `json:"mini,omitempty"`
-	Live       bool          `json:"live,omitempty"`
-	AltScreen  bool          `json:"alt_screen,omitempty"`
-	Compact    bool          `json:"compact,omitempty"`
-	ShowEmails bool          `json:"show_emails,omitempty"`
+	Mini       bool          `json:"mini"`
+	Live       bool          `json:"live"`
+	AltScreen  bool          `json:"alt_screen"`
+	Compact    bool          `json:"compact"`
+	ShowEmails bool          `json:"show_emails"`
 	Every      string        `json:"every,omitempty"`
 	Refresh    time.Duration `json:"-"`
 }
@@ -41,6 +39,10 @@ type Config struct {
 
 const DefaultRefresh = 5 * time.Minute
 
+func baseDefaults() Defaults {
+	return Defaults{Live: true, AltScreen: true, Refresh: DefaultRefresh}
+}
+
 func Path(home string) string {
 	base := os.Getenv("XDG_CONFIG_HOME")
 	if base == "" {
@@ -50,7 +52,7 @@ func Path(home string) string {
 }
 
 func Load(path, home string) (Config, error) {
-	c := Config{Defaults: Defaults{Live: true, AltScreen: true, Refresh: DefaultRefresh}}
+	c := Config{Defaults: baseDefaults()}
 	data, err := os.ReadFile(path)
 	if errors.Is(err, fs.ErrNotExist) {
 		return c, nil
@@ -99,34 +101,4 @@ func ExpandHome(dir, home string) string {
 		dir = filepath.Join(home, dir[1:])
 	}
 	return filepath.Clean(dir)
-}
-
-func Starter(found []discover.Account, home string) Config {
-	var c Config
-	for _, a := range found {
-		c.Accounts = append(c.Accounts, Entry{Provider: a.Provider, Dir: shortHome(a.Dir, home), Name: a.Name})
-	}
-	return c
-}
-
-func Write(path string, c Config) error {
-	if _, err := os.Stat(path); err == nil {
-		return fmt.Errorf("%s already exists", path)
-	}
-	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
-		return err
-	}
-	data, err := json.MarshalIndent(c, "", "  ")
-	if err != nil {
-		return err
-	}
-	return os.WriteFile(path, append(data, '\n'), 0o600)
-}
-
-func shortHome(dir, home string) string {
-	rel, err := filepath.Rel(home, dir)
-	if err != nil || strings.HasPrefix(rel, "..") {
-		return dir
-	}
-	return "~/" + filepath.ToSlash(rel)
 }
