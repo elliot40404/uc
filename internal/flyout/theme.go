@@ -1,0 +1,78 @@
+package flyout
+
+import "image/color"
+
+type Theme struct {
+	Bg, Card, Line, Text, Dim, Faint, Track color.RGBA
+	Accent, OnAccent, Button, Hover         color.RGBA
+	Green, Yellow, Red                      color.RGBA
+	Providers                               map[string]color.RGBA
+}
+
+func Dark() Theme {
+	return Theme{
+		Bg:       rgb(0x20, 0x20, 0x20),
+		Card:     rgb(0x2b, 0x2b, 0x2b),
+		Line:     rgb(0x36, 0x36, 0x36),
+		Text:     rgb(0xf3, 0xf3, 0xf3),
+		Dim:      rgb(0xa8, 0xa8, 0xa8),
+		Faint:    rgb(0x78, 0x78, 0x78),
+		Track:    rgb(0x3d, 0x3d, 0x3d),
+		Accent:   rgb(0x4c, 0xc2, 0xff),
+		OnAccent: rgb(0x00, 0x1a, 0x28),
+		Button:   rgb(0x33, 0x33, 0x33),
+		Hover:    rgb(0x3d, 0x3d, 0x3d),
+		Green:    rgb(0x3f, 0xb9, 0x50),
+		Yellow:   rgb(0xe3, 0xa0, 0x08),
+		Red:      rgb(0xf8, 0x51, 0x49),
+		Providers: map[string]color.RGBA{
+			"claude": rgb(0xd9, 0x77, 0x57),
+			"codex":  rgb(0x9b, 0x8a, 0xfb),
+		},
+	}
+}
+
+func Light() Theme {
+	return Theme{
+		Bg:       rgb(0xf3, 0xf3, 0xf3),
+		Card:     rgb(0xff, 0xff, 0xff),
+		Line:     rgb(0xe0, 0xe0, 0xe0),
+		Text:     rgb(0x1a, 0x1a, 0x1a),
+		Dim:      rgb(0x5c, 0x5c, 0x5c),
+		Faint:    rgb(0x8a, 0x8a, 0x8a),
+		Track:    rgb(0xe6, 0xe6, 0xe6),
+		Accent:   rgb(0x00, 0x5f, 0xb8),
+		OnAccent: rgb(0xff, 0xff, 0xff),
+		Button:   rgb(0xfb, 0xfb, 0xfb),
+		Hover:    rgb(0xef, 0xef, 0xef),
+		Green:    rgb(0x1a, 0x7f, 0x37),
+		Yellow:   rgb(0xb0, 0x6f, 0x00),
+		Red:      rgb(0xc4, 0x2b, 0x1c),
+		Providers: map[string]color.RGBA{
+			"claude": rgb(0xc1, 0x5f, 0x3c),
+			"codex":  rgb(0x6e, 0x56, 0xcf),
+		},
+	}
+}
+
+func (t Theme) level(pct float64) color.RGBA {
+	switch {
+	case pct >= 90:
+		return t.Red
+	case pct >= 60:
+		return t.Yellow
+	default:
+		return t.Green
+	}
+}
+
+func (t Theme) provider(name string) color.RGBA {
+	if c, ok := t.Providers[name]; ok {
+		return c
+	}
+	return t.Dim
+}
+
+func rgb(r, g, b uint8) color.RGBA {
+	return color.RGBA{r, g, b, 0xff}
+}
