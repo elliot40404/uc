@@ -33,6 +33,8 @@ func (m Model) onSettingsKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		m.setRow = wrap(m.setRow+1, m.settingRows())
 	case key.Matches(msg, m.keys.hide):
 		return m.toggleHidden()
+	case key.Matches(msg, m.keys.rename):
+		return m.startRename()
 	case key.Matches(msg, m.keys.toggle):
 		m = m.toggle()
 	case key.Matches(msg, m.keys.left):

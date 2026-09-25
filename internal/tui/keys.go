@@ -17,6 +17,9 @@ type keyMap struct {
 	left      key.Binding
 	right     key.Binding
 	hide      key.Binding
+	rename    key.Binding
+	confirm   key.Binding
+	cancel    key.Binding
 }
 
 func newKeys() keyMap {
@@ -35,6 +38,9 @@ func newKeys() keyMap {
 		left:      key.NewBinding(key.WithKeys("left"), key.WithHelp("←/→", "change")),
 		right:     key.NewBinding(key.WithKeys("right")),
 		hide:      key.NewBinding(key.WithKeys("h"), key.WithHelp("h", "hide/unhide")),
+		rename:    key.NewBinding(key.WithKeys("n"), key.WithHelp("n", "rename")),
+		confirm:   key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter", "save")),
+		cancel:    key.NewBinding(key.WithKeys("esc"), key.WithHelp("esc", "cancel")),
 	}
 }
 

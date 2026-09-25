@@ -67,8 +67,11 @@ func (m Model) accountLine(it config.Item, selected bool, nameW int) string {
 	if it.Hide {
 		name = name.Foreground(t.subtle)
 	}
-	line := cursor + t.fg(t.provider(it.Provider)).Width(8).Render(it.Provider) +
-		name.Width(nameW+2).Render(usage.TerminalText(it.Name)) +
+	label := name.Width(nameW + 2).Render(usage.TerminalText(it.Name))
+	if selected && m.renaming {
+		label = m.input.View() + "  "
+	}
+	line := cursor + t.fg(t.provider(it.Provider)).Width(8).Render(it.Provider) + label +
 		t.fg(t.subtle).Render(usage.TerminalText(config.ShortHome(it.Dir, m.home)))
 	if it.Hide {
 		line += t.fg(t.warn).Render("  hidden")

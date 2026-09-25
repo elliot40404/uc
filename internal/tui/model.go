@@ -7,6 +7,7 @@ import (
 	"charm.land/bubbles/v2/help"
 	"charm.land/bubbles/v2/key"
 	"charm.land/bubbles/v2/spinner"
+	"charm.land/bubbles/v2/textinput"
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/elliot40404/uc/internal/config"
@@ -64,6 +65,9 @@ type Model struct {
 	found     []discover.Account
 	home      string
 	reload    bool
+	renaming  bool
+	renameOf  config.Item
+	input     textinput.Model
 	width     int
 	height    int
 }
@@ -121,10 +125,18 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, cmd
 		}
 	}
+	if m.renaming {
+		var cmd tea.Cmd
+		m.input, cmd = m.input.Update(msg)
+		return m, cmd
+	}
 	return m, nil
 }
 
 func (m Model) onKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
+	if m.renaming {
+		return m.onRenameKey(msg)
+	}
 	if m.settings {
 		return m.onSettingsKey(msg)
 	}

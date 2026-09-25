@@ -68,8 +68,11 @@ func (m Model) checkbox(on bool) string {
 }
 
 func (m Model) settingsHelp() string {
+	if m.renaming {
+		return m.help.ShortHelpView([]key.Binding{m.keys.confirm, m.keys.cancel})
+	}
 	if m.setRow >= rowCount {
-		return m.help.ShortHelpView([]key.Binding{m.keys.up, m.keys.down, m.keys.hide, m.keys.back})
+		return m.help.ShortHelpView([]key.Binding{m.keys.up, m.keys.down, m.keys.hide, m.keys.rename, m.keys.back})
 	}
 	return m.help.ShortHelpView([]key.Binding{m.keys.up, m.keys.down, m.keys.toggle, m.keys.left, m.keys.back})
 }
