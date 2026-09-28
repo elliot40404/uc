@@ -21,6 +21,7 @@ func main() {
 		return
 	}
 	defer windows.CloseHandle(lock)
+	logCrashes()
 	call("SetProcessDpiAwarenessContext", dpiAwareV2)
 	debug.SetGCPercent(gcPercent)
 	t := newTray()
