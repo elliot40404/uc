@@ -12,19 +12,24 @@ import (
 	"github.com/elliot40404/uc/internal/usage"
 )
 
+const authName = "auth.json"
+
 type Creds struct {
-	AccessToken string
-	AccountID   string
-	ExpiresAt   time.Time
-	Email       string
-	Plan        string
+	AccessToken  string
+	RefreshToken string
+	IDToken      string
+	AccountID    string
+	ExpiresAt    time.Time
+	Email        string
+	Plan         string
 }
 
 type authFile struct {
 	Tokens *struct {
-		IDToken     string `json:"id_token"`
-		AccessToken string `json:"access_token"`
-		AccountID   string `json:"account_id"`
+		IDToken      string `json:"id_token"`
+		AccessToken  string `json:"access_token"`
+		RefreshToken string `json:"refresh_token"`
+		AccountID    string `json:"account_id"`
 	} `json:"tokens"`
 }
 
@@ -38,24 +43,34 @@ type claims struct {
 
 func LoadCreds(dir string) (Creds, error) {
 	var f authFile
-	if err := jsonfile.Read(filepath.Join(dir, "auth.json"), &f); err != nil {
+	if err := jsonfile.Read(authPath(dir), &f); err != nil {
 		return Creds{}, err
 	}
 	if f.Tokens == nil || f.Tokens.AccessToken == "" {
 		return Creds{}, usage.ErrNoLogin
 	}
-	access, err := parseJWT(f.Tokens.AccessToken)
+	return fromTokens(Creds{
+		AccessToken:  f.Tokens.AccessToken,
+		RefreshToken: f.Tokens.RefreshToken,
+		IDToken:      f.Tokens.IDToken,
+		AccountID:    f.Tokens.AccountID,
+	})
+}
+
+func fromTokens(c Creds) (Creds, error) {
+	access, err := parseJWT(c.AccessToken)
 	if err != nil {
 		return Creds{}, err
 	}
-	id, _ := parseJWT(f.Tokens.IDToken)
-	return Creds{
-		AccessToken: f.Tokens.AccessToken,
-		AccountID:   f.Tokens.AccountID,
-		ExpiresAt:   time.Unix(access.Exp, 0),
-		Email:       id.Email,
-		Plan:        access.Auth.Plan,
-	}, nil
+	id, _ := parseJWT(c.IDToken)
+	c.ExpiresAt = time.Unix(access.Exp, 0)
+	c.Email = id.Email
+	c.Plan = access.Auth.Plan
+	return c, nil
+}
+
+func authPath(dir string) string {
+	return filepath.Join(dir, authName)
 }
 
 func (c Creds) Expired(now time.Time) bool {

@@ -13,8 +13,9 @@ import (
 const DefaultBaseURL = "https://chatgpt.com/backend-api"
 
 type Client struct {
-	HTTP    *http.Client
-	BaseURL string
+	HTTP     *http.Client
+	BaseURL  string
+	TokenURL string
 }
 
 type window struct {

@@ -52,7 +52,7 @@ func (e Env) Reports(parent context.Context) ([]usage.Report, time.Time, error) 
 	store := openCache()
 	reporters := map[string]collect.Reporter{
 		"claude": cached(store, "claude", claude.Client{HTTP: httpClient, BaseURL: claude.DefaultBaseURL, TokenURL: claude.DefaultTokenURL}, claude.Email),
-		"codex":  cached(store, "codex", codex.Client{HTTP: httpClient, BaseURL: codex.DefaultBaseURL}, codexEmail),
+		"codex":  cached(store, "codex", codex.Client{HTTP: httpClient, BaseURL: codex.DefaultBaseURL, TokenURL: codex.DefaultTokenURL}, codexEmail),
 	}
 	now := time.Now()
 	reports := collect.All(ctx, accounts, reporters, now)

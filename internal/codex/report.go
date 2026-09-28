@@ -5,6 +5,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/elliot40404/uc/internal/renew"
 	"github.com/elliot40404/uc/internal/usage"
 )
 
@@ -15,6 +16,11 @@ func (c Client) Report(ctx context.Context, name, dir string, now time.Time) usa
 		return r.Fail(err)
 	}
 	r.Email, r.Plan = creds.Email, creds.Plan
+	if renew.Due(creds, now) {
+		if fresh, _ := c.renew(ctx, dir, now); !fresh.Expired(now) {
+			creds = fresh
+		}
+	}
 	if creds.Expired(now) {
 		r.Status = usage.StatusExpired
 		return r
