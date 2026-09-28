@@ -63,7 +63,7 @@ go install -ldflags="-H=windowsgui" github.com/elliot40404/uc/cmd/uctray@latest
 
 Or run `just install-tray`. Without `-H=windowsgui` a console window stays open next to the icon.
 
-Hover shows the suggested account per provider. Left click opens a popup with a card per account, its usage bars and reset times,, with a refresh icon in the header. The popup follows the Windows light or dark taskbar theme and closes on Esc or a click elsewhere. Right click has `Refresh now`, `Start with Windows` and `Quit`. The tray reads the same config and cache as `uc`, refreshes on `defaults.every` (minimum 1 minute), rereads config on every refresh and never shows emails. Only one copy runs at a time.
+Hover shows the suggested account per provider. Left click opens a popup with a card per account, its usage bars and reset times,, with a refresh icon in the header. The popup follows the Windows light or dark taskbar theme and closes on Esc or a click elsewhere. If it crashes, the reason is appended to `%LOCALAPPDATA%/uc/uctray.log`. Right click has `Refresh now`, `Start with Windows` and `Quit`. The tray reads the same config and cache as `uc`, refreshes on `defaults.every` (minimum 1 minute), rereads config on every refresh and never shows emails. Only one copy runs at a time.
 
 ## Which account to use first?
 
@@ -106,7 +106,7 @@ Accounts are found automatically in directories matching `~/.claude*` and `~/.co
 
 ## Privacy and refresh behavior
 
-- Login files are read but never written or refreshed. Access tokens are sent only to the corresponding provider's usage API.
+- When a login is about to expire, `uc` renews it with the saved refresh token and writes the new tokens back to the same login file, keeping every other field. Tokens are sent only to the provider's own login and usage APIs. A lock file next to the login stops `uc` and `uctray` from renewing at the same moment. macOS Keychain logins are not renewed.
 - Successful usage results are cached in your user cache directory (typically `%LOCALAPPDATA%/uc/usage.json` on Windows). The cache stores usage, plan, status and refresh times, but not tokens, emails, account names or account paths. Emails shown with cached data are read again from local login files.
 - Results less than a minute old are reused. After an HTTP 429, requests to that provider pause for 2 minutes, doubling on further rate limits up to 30 minutes. Recent cached usage (less than 6 hours old) is shown as cached and rate limited; older usage is not shown.
-- `expired` means the saved login has expired. Run `claude` or `codex` once with that account to renew it.
+- `expired` means the saved login expired and could not be renewed (no refresh token, refresh token expired, or the provider refused it). Run `claude` or `codex` once with that account to log in again.
