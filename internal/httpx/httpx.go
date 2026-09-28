@@ -1,6 +1,7 @@
 package httpx
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -17,10 +18,27 @@ func GetJSON(ctx context.Context, c *http.Client, url string, headers map[string
 	if err != nil {
 		return err
 	}
-	req.Header.Set("Accept", "application/json")
 	for k, v := range headers {
 		req.Header.Set(k, v)
 	}
+	return do(c, req, out)
+}
+
+func PostJSON(ctx context.Context, c *http.Client, url string, body, out any) error {
+	data, err := json.Marshal(body)
+	if err != nil {
+		return err
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(data))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	return do(c, req, out)
+}
+
+func do(c *http.Client, req *http.Request, out any) error {
+	req.Header.Set("Accept", "application/json")
 	resp, err := c.Do(req)
 	if err != nil {
 		return err
