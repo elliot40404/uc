@@ -61,7 +61,7 @@ func (p *popup) onMove(x, y int) {
 }
 
 func (p *popup) setHover(action string) {
-	if action == p.hover {
+	if action == p.hover || !p.shown {
 		return
 	}
 	p.hover = action
