@@ -12,8 +12,9 @@ import (
 const DefaultBaseURL = "https://api.anthropic.com"
 
 type Client struct {
-	HTTP    *http.Client
-	BaseURL string
+	HTTP     *http.Client
+	BaseURL  string
+	TokenURL string
 }
 
 type limit struct {

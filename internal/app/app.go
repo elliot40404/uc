@@ -51,7 +51,7 @@ func (e Env) Reports(parent context.Context) ([]usage.Report, time.Time, error) 
 	httpClient := &http.Client{Timeout: timeout}
 	store := openCache()
 	reporters := map[string]collect.Reporter{
-		"claude": cached(store, "claude", claude.Client{HTTP: httpClient, BaseURL: claude.DefaultBaseURL}, claude.Email),
+		"claude": cached(store, "claude", claude.Client{HTTP: httpClient, BaseURL: claude.DefaultBaseURL, TokenURL: claude.DefaultTokenURL}, claude.Email),
 		"codex":  cached(store, "codex", codex.Client{HTTP: httpClient, BaseURL: codex.DefaultBaseURL}, codexEmail),
 	}
 	now := time.Now()
