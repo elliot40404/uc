@@ -35,6 +35,7 @@ func init() {
 	}
 }
 
+//go:uintptrescapes
 func call(name string, args ...uintptr) uintptr {
 	r, _, _ := procs[name].Call(args...)
 	return r
@@ -125,7 +126,7 @@ type bitmapHeader struct {
 
 type margins struct{ Left, Right, Top, Bottom int32 }
 
-func ptr[T any](v *T) uintptr { return uintptr(unsafe.Pointer(v)) }
+func ptr[T any](v *T) unsafe.Pointer { return unsafe.Pointer(v) }
 
 func loword(v uintptr) int { return int(int16(v & 0xFFFF)) }
 

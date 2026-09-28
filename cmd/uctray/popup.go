@@ -38,9 +38,9 @@ func (p *popup) run(ready chan<- struct{}) {
 	p.hwnd = p.create()
 	close(ready)
 	var m msg
-	for int32(call("GetMessageW", ptr(&m), 0, 0, 0)) > 0 {
-		call("TranslateMessage", ptr(&m))
-		call("DispatchMessageW", ptr(&m))
+	for int32(call("GetMessageW", uintptr(ptr(&m)), 0, 0, 0)) > 0 {
+		call("TranslateMessage", uintptr(ptr(&m)))
+		call("DispatchMessageW", uintptr(ptr(&m)))
 	}
 }
 
@@ -54,12 +54,12 @@ func (p *popup) create() windows.HWND {
 		ClassName: name,
 	}
 	wc.Size = uint32(unsafe.Sizeof(wc))
-	call("RegisterClassExW", ptr(&wc))
+	call("RegisterClassExW", uintptr(ptr(&wc)))
 	h := windows.HWND(call("CreateWindowExW", wsExTopmost|wsExToolWindow, uintptr(unsafe.Pointer(name)), 0, wsPopup,
 		0, 0, 1, 1, 0, 0, uintptr(inst), 0))
 	corner := int32(dwmRound)
-	call("DwmSetWindowAttribute", uintptr(h), dwmCorners, ptr(&corner), 4)
-	call("DwmExtendFrameIntoClientArea", uintptr(h), ptr(&margins{0, 0, 0, 1}))
+	call("DwmSetWindowAttribute", uintptr(h), dwmCorners, uintptr(ptr(&corner)), 4)
+	call("DwmExtendFrameIntoClientArea", uintptr(h), uintptr(ptr(&margins{0, 0, 0, 1})))
 	return h
 }
 
@@ -126,10 +126,10 @@ func (p *popup) onToggle() {
 
 func (p *popup) show() {
 	var cursor point
-	call("GetCursorPos", ptr(&cursor))
+	call("GetCursorPos", uintptr(ptr(&cursor)))
 	mon := call("MonitorFromPoint", uintptr(uint32(cursor.X))|uintptr(uint32(cursor.Y))<<32, monitorNearest)
 	var dpiX, dpiY uint32
-	call("GetDpiForMonitor", mon, mdtEffective, ptr(&dpiX), ptr(&dpiY))
+	call("GetDpiForMonitor", mon, mdtEffective, uintptr(ptr(&dpiX)), uintptr(ptr(&dpiY)))
 	p.scale = max(float64(dpiX), 96) / 96
 	p.hover = ""
 	if p.fonts == nil {
@@ -138,7 +138,7 @@ func (p *popup) show() {
 	p.render()
 	info := monitorInfo{}
 	info.Size = uint32(unsafe.Sizeof(info))
-	call("GetMonitorInfoW", mon, ptr(&info))
+	call("GetMonitorInfoW", mon, uintptr(ptr(&info)))
 	w, h := int32(p.img.Bounds().Dx()), int32(p.img.Bounds().Dy())
 	x, y := place(cursor, info.Work, w, h, int32(12*p.scale))
 	p.shown = true

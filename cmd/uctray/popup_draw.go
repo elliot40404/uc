@@ -21,7 +21,7 @@ func (p *popup) render() {
 	if lightTheme() {
 		theme, dark = flyout.Light(), 0
 	}
-	call("DwmSetWindowAttribute", uintptr(p.hwnd), dwmDarkMode, ptr(&dark), 4)
+	call("DwmSetWindowAttribute", uintptr(p.hwnd), dwmDarkMode, uintptr(ptr(&dark)), 4)
 	p.img, p.hits = flyout.Render(v, theme, p.fonts, p.scale, p.hover)
 	p.bgra = toBGRA(p.img, p.bgra)
 }
@@ -40,21 +40,21 @@ func (p *popup) redraw() {
 
 func (p *popup) paint() {
 	var ps paintStruct
-	hdc := call("BeginPaint", uintptr(p.hwnd), ptr(&ps))
+	hdc := call("BeginPaint", uintptr(p.hwnd), uintptr(ptr(&ps)))
 	if p.img != nil {
 		w, h := p.img.Bounds().Dx(), p.img.Bounds().Dy()
 		bi := bitmapHeader{Width: int32(w), Height: -int32(h), Planes: 1, BitCount: 32}
 		bi.Size = uint32(unsafe.Sizeof(bi))
-		call("SetDIBitsToDevice", hdc, 0, 0, uintptr(w), uintptr(h), 0, 0, 0, uintptr(h), ptr(&p.bgra[0]), ptr(&bi), 0)
+		call("SetDIBitsToDevice", hdc, 0, 0, uintptr(w), uintptr(h), 0, 0, 0, uintptr(h), uintptr(ptr(&p.bgra[0])), uintptr(ptr(&bi)), 0)
 	}
-	call("EndPaint", uintptr(p.hwnd), ptr(&ps))
+	call("EndPaint", uintptr(p.hwnd), uintptr(ptr(&ps)))
 }
 
 func (p *popup) onMove(x, y int) {
 	if !p.tracking {
 		tm := trackMouse{Flags: tmeLeave, Hwnd: p.hwnd}
 		tm.Size = uint32(unsafe.Sizeof(tm))
-		call("TrackMouseEvent", ptr(&tm))
+		call("TrackMouseEvent", uintptr(ptr(&tm)))
 		p.tracking = true
 	}
 	p.setHover(p.hitAt(x, y))
