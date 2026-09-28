@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/elliot40404/uc/internal/discover"
+	"github.com/elliot40404/uc/internal/jsonfile"
 )
 
 func Starter(found []discover.Account, home string) Config {
@@ -35,7 +36,7 @@ func Save(path string, c Config, home string) error {
 	if err != nil {
 		return err
 	}
-	return writeAtomic(path, append(data, '\n'))
+	return jsonfile.WriteAtomic(path, append(data, '\n'))
 }
 
 func FormatEvery(d time.Duration) string {
@@ -64,24 +65,4 @@ func ShortHome(dir, home string) string {
 		return dir
 	}
 	return "~/" + filepath.ToSlash(rel)
-}
-
-func writeAtomic(path string, data []byte) error {
-	dir := filepath.Dir(path)
-	if err := os.MkdirAll(dir, 0o700); err != nil {
-		return err
-	}
-	f, err := os.CreateTemp(dir, ".config-*.json")
-	if err != nil {
-		return err
-	}
-	defer os.Remove(f.Name())
-	if _, err := f.Write(data); err != nil {
-		f.Close()
-		return err
-	}
-	if err := f.Close(); err != nil {
-		return err
-	}
-	return os.Rename(f.Name(), path)
 }
