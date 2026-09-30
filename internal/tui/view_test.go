@@ -33,7 +33,7 @@ func sample() []usage.Report {
 		{Provider: "claude", Account: "old", Status: usage.StatusExpired},
 		{Provider: "claude", Account: "busy", Status: usage.StatusLimited},
 		{Provider: "claude", Account: "slow", Status: usage.StatusOK, Stale: true, UpdatedAt: now.Add(-time.Hour),
-			Windows: []usage.Window{win(usage.Session, 20, time.Hour), win(usage.Week, 50, 6*24*time.Hour)}},
+			Windows: []usage.Window{win(usage.Session, 20, time.Hour), win(usage.Week, 50, 6*24*time.Hour+6*time.Hour)}},
 		{Provider: "codex", Account: "default", Email: "me@x.io", Plan: "plus", Status: usage.StatusOK,
 			Windows: []usage.Window{win(usage.Session, 0, 5*time.Hour), win(usage.Week, 9, 60*time.Hour)}},
 	}
@@ -100,7 +100,7 @@ func TestCompactShowsCountdown(t *testing.T) {
 	m := loaded(t, 160, 40)
 	m.compact = true
 	out := plain(m.frame())
-	for _, want := range []string{"06:00 · in 4h", "Mon 06:00 · in 3d 4h", "not started"} {
+	for _, want := range []string{"06:00 · in 4h", "Mon 06:00 · in 3d 4h", "Thu 1 Oct 08:00 · in 6d 6h", "not started"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("compact missing %q", want)
 		}

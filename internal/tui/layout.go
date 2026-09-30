@@ -11,9 +11,8 @@ import (
 )
 
 const (
-	minCard  = 48
-	gridGap  = 2
-	clockCol = 22
+	minCard = 48
+	gridGap = 2
 )
 
 func columns(w int) int {
@@ -60,33 +59,47 @@ type rowLayout struct {
 	nameW  int
 	emailW int
 	barW   int
-	clocks bool
+	clockW int
 }
 
 const (
-	rowBase   = 2 + 7 + 2 + 2 + 6
-	winBase   = 4 + 5 + 2
-	minMini   = 4
-	maxMini   = 20
-	clockPart = clockCol + 2
+	rowBase  = 2 + 7 + 2 + 2 + 6
+	winBase  = 4 + 5 + 2
+	minMini  = 4
+	maxMini  = 20
+	clockGap = 2
 )
 
 func (m Model) layoutRows(w int) rowLayout {
-	l := rowLayout{clocks: true}
+	var l rowLayout
 	for _, r := range m.reports {
 		l.nameW = max(l.nameW, lipgloss.Width(r.Account))
 		l.emailW = max(l.emailW, lipgloss.Width(r.Email)+2)
+		l.clockW = max(l.clockW, m.widestReset(r))
 	}
-	room := func() int { return (w - rowBase - l.nameW - l.emailW - 2*winBase - 2*clockPart) / 2 }
+	room := func() int { return (w - rowBase - l.nameW - l.emailW - 2*winBase - 2*l.clockW) / 2 }
 	if !m.emails || room() < minMini+4 {
 		l.emailW = 0
 	}
 	freed := 0
 	if room() < minMini {
-		l.clocks, freed = false, clockPart
+		l.clockW, freed = 0, l.clockW
 	}
 	l.barW = min(max(room()+freed, minMini), maxMini)
 	return l
+}
+
+func (m Model) widestReset(r usage.Report) int {
+	widest := 0
+	if r.Status != usage.StatusOK {
+		return widest
+	}
+	for _, name := range []string{usage.Session, usage.Week} {
+		if w, ok := r.Window(name); ok {
+			widest = max(widest, lipgloss.Width(m.resetShort(w))+clockGap)
+		}
+	}
+	return widest
 }
 
 func (m Model) rows(w int) []string {
@@ -134,8 +147,8 @@ func (m Model) miniWindow(r usage.Report, name string, l rowLayout) string {
 	}
 	pct := t.fg(t.level(w.UsedPct)).Bold(true).Width(5).Align(lipgloss.Right).Render(fmt.Sprintf("%.0f%%", w.UsedPct))
 	out := label + t.bar(w.UsedPct, l.barW) + pct + "  "
-	if l.clocks {
-		out += lipgloss.NewStyle().Width(clockPart).Render(m.resetShort(w))
+	if l.clockW > 0 {
+		out += lipgloss.NewStyle().Width(l.clockW).Render(m.resetShort(w))
 	}
 	return out
 }
